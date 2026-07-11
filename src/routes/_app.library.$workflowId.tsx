@@ -93,7 +93,7 @@ function WorkflowDetail() {
         <div className="relative pl-6">
           <div className="absolute left-[10px] top-2 bottom-2 w-px bg-subtle" />
           <ol className="space-y-3">
-            {workflow.steps.map((s) => (
+            {workflow.steps.map((s: WorkflowStep) => (
               <StepCard key={s.n} step={s} status="idle" />
             ))}
           </ol>

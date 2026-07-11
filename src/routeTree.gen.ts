@@ -9,38 +9,154 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EditorVideoIdRouteImport } from './routes/editor.$videoId'
+import { Route as AppVideosRouteImport } from './routes/_app.videos'
+import { Route as AppSkillsRouteImport } from './routes/_app.skills'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppLibraryRouteImport } from './routes/_app.library'
+import { Route as AppChannelsRouteImport } from './routes/_app.channels'
+import { Route as AppSkillsSkillIdRouteImport } from './routes/_app.skills.$skillId'
+import { Route as AppLibraryWorkflowIdRouteImport } from './routes/_app.library.$workflowId'
 
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditorVideoIdRoute = EditorVideoIdRouteImport.update({
+  id: '/editor/$videoId',
+  path: '/editor/$videoId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppVideosRoute = AppVideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSkillsRoute = AppSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLibraryRoute = AppLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChannelsRoute = AppChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSkillsSkillIdRoute = AppSkillsSkillIdRouteImport.update({
+  id: '/$skillId',
+  path: '/$skillId',
+  getParentRoute: () => AppSkillsRoute,
+} as any)
+const AppLibraryWorkflowIdRoute = AppLibraryWorkflowIdRouteImport.update({
+  id: '/$workflowId',
+  path: '/$workflowId',
+  getParentRoute: () => AppLibraryRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/channels': typeof AppChannelsRoute
+  '/library': typeof AppLibraryRouteWithChildren
+  '/settings': typeof AppSettingsRoute
+  '/skills': typeof AppSkillsRouteWithChildren
+  '/videos': typeof AppVideosRoute
+  '/editor/$videoId': typeof EditorVideoIdRoute
+  '/library/$workflowId': typeof AppLibraryWorkflowIdRoute
+  '/skills/$skillId': typeof AppSkillsSkillIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/channels': typeof AppChannelsRoute
+  '/library': typeof AppLibraryRouteWithChildren
+  '/settings': typeof AppSettingsRoute
+  '/skills': typeof AppSkillsRouteWithChildren
+  '/videos': typeof AppVideosRoute
+  '/editor/$videoId': typeof EditorVideoIdRoute
+  '/library/$workflowId': typeof AppLibraryWorkflowIdRoute
+  '/skills/$skillId': typeof AppSkillsSkillIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/channels': typeof AppChannelsRoute
+  '/_app/library': typeof AppLibraryRouteWithChildren
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/skills': typeof AppSkillsRouteWithChildren
+  '/_app/videos': typeof AppVideosRoute
+  '/editor/$videoId': typeof EditorVideoIdRoute
+  '/_app/library/$workflowId': typeof AppLibraryWorkflowIdRoute
+  '/_app/skills/$skillId': typeof AppSkillsSkillIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/channels'
+    | '/library'
+    | '/settings'
+    | '/skills'
+    | '/videos'
+    | '/editor/$videoId'
+    | '/library/$workflowId'
+    | '/skills/$skillId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/channels'
+    | '/library'
+    | '/settings'
+    | '/skills'
+    | '/videos'
+    | '/editor/$videoId'
+    | '/library/$workflowId'
+    | '/skills/$skillId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/channels'
+    | '/_app/library'
+    | '/_app/settings'
+    | '/_app/skills'
+    | '/_app/videos'
+    | '/editor/$videoId'
+    | '/_app/library/$workflowId'
+    | '/_app/skills/$skillId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  EditorVideoIdRoute: typeof EditorVideoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +164,111 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editor/$videoId': {
+      id: '/editor/$videoId'
+      path: '/editor/$videoId'
+      fullPath: '/editor/$videoId'
+      preLoaderRoute: typeof EditorVideoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/videos': {
+      id: '/_app/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof AppVideosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/skills': {
+      id: '/_app/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof AppSkillsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/library': {
+      id: '/_app/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AppLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/channels': {
+      id: '/_app/channels'
+      path: '/channels'
+      fullPath: '/channels'
+      preLoaderRoute: typeof AppChannelsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/skills/$skillId': {
+      id: '/_app/skills/$skillId'
+      path: '/$skillId'
+      fullPath: '/skills/$skillId'
+      preLoaderRoute: typeof AppSkillsSkillIdRouteImport
+      parentRoute: typeof AppSkillsRoute
+    }
+    '/_app/library/$workflowId': {
+      id: '/_app/library/$workflowId'
+      path: '/$workflowId'
+      fullPath: '/library/$workflowId'
+      preLoaderRoute: typeof AppLibraryWorkflowIdRouteImport
+      parentRoute: typeof AppLibraryRoute
+    }
   }
 }
 
+interface AppLibraryRouteChildren {
+  AppLibraryWorkflowIdRoute: typeof AppLibraryWorkflowIdRoute
+}
+
+const AppLibraryRouteChildren: AppLibraryRouteChildren = {
+  AppLibraryWorkflowIdRoute: AppLibraryWorkflowIdRoute,
+}
+
+const AppLibraryRouteWithChildren = AppLibraryRoute._addFileChildren(
+  AppLibraryRouteChildren,
+)
+
+interface AppSkillsRouteChildren {
+  AppSkillsSkillIdRoute: typeof AppSkillsSkillIdRoute
+}
+
+const AppSkillsRouteChildren: AppSkillsRouteChildren = {
+  AppSkillsSkillIdRoute: AppSkillsSkillIdRoute,
+}
+
+const AppSkillsRouteWithChildren = AppSkillsRoute._addFileChildren(
+  AppSkillsRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppChannelsRoute: typeof AppChannelsRoute
+  AppLibraryRoute: typeof AppLibraryRouteWithChildren
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppSkillsRoute: typeof AppSkillsRouteWithChildren
+  AppVideosRoute: typeof AppVideosRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppChannelsRoute: AppChannelsRoute,
+  AppLibraryRoute: AppLibraryRouteWithChildren,
+  AppSettingsRoute: AppSettingsRoute,
+  AppSkillsRoute: AppSkillsRouteWithChildren,
+  AppVideosRoute: AppVideosRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  EditorVideoIdRoute: EditorVideoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
