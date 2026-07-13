@@ -1,25 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronRight, Play, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
-  Plus,
-  Music,
-  Film,
-  BookOpen,
-  Trophy,
-  ChevronRight,
-  Play,
-  Layers,
-} from "lucide-react";
-import {
-  mockWorkflows,
   mockVideos,
-  categoryClass,
+  mockWorkflows,
   statusLeftBorder,
   type Workflow,
 } from "@/mock/data";
 import { cn } from "@/lib/tp";
-
-const iconMap = { Music, Film, BookOpen, Trophy } as const;
 
 export const Route = createFileRoute("/_app/agents")({
   head: () => ({
@@ -27,33 +15,26 @@ export const Route = createFileRoute("/_app/agents")({
       { title: "Agents — TubePilot" },
       {
         name: "description",
-        content: "Browse and run your automated video workflows.",
+        content: "Your AI agents that produce and publish videos on autopilot.",
       },
     ],
   }),
   component: AgentsPage,
 });
 
-const cats = [
-  "All",
-  "Music",
-  "Documentary",
-  "Education",
-  "Sports",
-  "Custom",
-] as const;
-
 function AgentsPage() {
-  const [cat, setCat] = useState<(typeof cats)[number]>("All");
+  const [q, setQ] = useState("");
   const pending = mockVideos.filter((v) => v.status === "pending_review");
 
-  const filtered = useMemo(
-    () =>
-      mockWorkflows.filter(
-        (w) => cat === "All" || w.category === cat.toLowerCase(),
-      ),
-    [cat],
-  );
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return mockWorkflows;
+    return mockWorkflows.filter(
+      (w) =>
+        w.name.toLowerCase().includes(needle) ||
+        w.description.toLowerCase().includes(needle),
+    );
+  }, [q]);
 
   return (
     <div className="space-y-6">
@@ -69,98 +50,86 @@ function AgentsPage() {
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-semibold tracking-tight">Agents</h1>
-          <p className="text-[13px] text-text-secondary mt-1">
-            Your automation modules
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-[22px] font-semibold tracking-tight">Agents</h1>
         </div>
-        <button className="inline-flex items-center gap-1.5 rounded-lg bg-blue hover:bg-blue/90 text-white px-3.5 h-9 text-[13px] font-medium">
-          <Plus className="w-4 h-4" />
-          New Workflow
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {cats.map((c) => (
-          <button
-            key={c}
-            onClick={() => setCat(c)}
-            className={cn(
-              "px-3 h-7 rounded-md text-[13px] border transition-colors",
-              cat === c
-                ? "bg-raised text-text-primary border-subtle"
-                : "border-transparent text-text-secondary hover:text-text-primary hover:bg-hover",
-            )}
-          >
-            {c}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search..."
+              className="h-9 w-64 rounded-lg bg-surface border border-subtle pl-8 pr-3 text-[13px] placeholder:text-text-tertiary"
+            />
+          </div>
+          <button className="inline-flex items-center gap-1.5 rounded-lg bg-text-primary text-base hover:opacity-90 px-3.5 h-9 text-[13px] font-medium">
+            <Plus className="w-4 h-4" />
+            New
           </button>
-        ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((w) => (
-          <WorkflowCard key={w.id} w={w} />
-        ))}
-
-        <button className="flex flex-col items-center justify-center min-h-[220px] rounded-xl border border-dashed border-subtle text-text-secondary hover:text-text-primary hover:border-text-tertiary transition-colors">
-          <Layers className="w-6 h-6 mb-2" />
-          <span className="text-[13px]">Create Custom Workflow</span>
-        </button>
+      <div>
+        <h2 className="text-[15px] font-semibold text-text-primary mb-3">
+          Your agents
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((w) => (
+            <AgentCard key={w.id} w={w} />
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function WorkflowCard({ w }: { w: Workflow }) {
-  const Icon = (iconMap[w.icon as keyof typeof iconMap] ?? Music);
+function AgentCard({ w }: { w: Workflow }) {
   return (
     <div
       className={cn(
-        "group rounded-xl bg-surface border border-subtle p-5 card-shadow transition-transform hover:-translate-y-0.5",
+        "group rounded-xl bg-surface border border-subtle overflow-hidden card-shadow transition-transform hover:-translate-y-0.5",
         statusLeftBorder(w.status),
       )}
     >
-      <div className="flex items-start justify-between">
-        <div className="w-8 h-8 rounded-lg bg-raised flex items-center justify-center">
-          <Icon className="w-4 h-4 text-text-primary" />
-        </div>
-        <span
-          className={cn(
-            "text-[11px] font-medium uppercase tracking-wide rounded-md px-2 py-0.5",
-            categoryClass(w.category),
-          )}
+      {/* Hero row: avatar + name */}
+      <div className="flex items-center gap-3 px-5 pt-5">
+        <div
+          className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
+          style={{ backgroundColor: w.accent ?? "var(--tp-raised)" }}
         >
-          {w.category}
-        </span>
-      </div>
-
-      <div className="mt-4">
-        <div className="text-[15px] font-semibold text-text-primary">
-          {w.name}
+          {w.avatar ? (
+            <img
+              src={w.avatar}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          ) : null}
         </div>
-        <p className="text-[13px] text-text-secondary mt-1 line-clamp-2">
-          {w.description}
-        </p>
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-semibold text-text-primary truncate">
+            {w.name}
+          </div>
+          <div className="text-[11px] text-text-tertiary">
+            {w.steps.length} steps · Last run: {w.lastRun ?? "—"}
+          </div>
+        </div>
       </div>
 
-      <div className="my-4 h-px bg-subtle" />
+      <p className="px-5 mt-3 text-[13px] text-text-secondary line-clamp-2">
+        {w.description}
+      </p>
 
-      <div className="flex items-center justify-between text-[13px] text-text-secondary">
-        <span>{w.steps.length} steps</span>
-        <span>Last run: {w.lastRun ?? "—"}</span>
-      </div>
-
-      <div className="flex items-center justify-between mt-4">
-        <button className="inline-flex items-center gap-1.5 rounded-md bg-blue hover:bg-blue/90 text-white px-3 h-8 text-[13px] font-medium">
+      <div className="mt-5 border-t border-subtle bg-raised/40 flex items-center justify-between px-3 py-2">
+        <button className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-base hover:opacity-90 px-3 h-8 text-[13px] font-medium">
           <Play className="w-3.5 h-3.5" />
-          Run Now
+          Use agent
         </button>
         <Link
           to="/agents/$agentId"
           params={{ agentId: w.id }}
-          className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary"
+          className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary px-2 h-8"
         >
           Configure <ChevronRight className="w-4 h-4" />
         </Link>
