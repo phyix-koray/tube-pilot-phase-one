@@ -89,16 +89,17 @@ function VideosPage() {
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-semibold tracking-tight">Videos</h1>
+          <h1 className="text-[22px] font-semibold tracking-tight">Videos</h1>
           <p className="text-[13px] text-text-secondary mt-1">
-            All videos produced by your workflows.
+            All videos produced by your agents.
           </p>
         </div>
-        <button className="inline-flex items-center gap-1.5 rounded-lg bg-raised hover:bg-hover text-text-primary px-3.5 h-9 text-[13px]">
+        <button className="inline-flex items-center gap-1.5 rounded-lg bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3.5 h-9 text-[13px] font-medium">
           <Upload className="w-4 h-4" />
           Upload manually
         </button>
       </div>
+
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
