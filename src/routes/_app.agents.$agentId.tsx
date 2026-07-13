@@ -16,7 +16,7 @@ import { cn } from "@/lib/tp";
 
 export const Route = createFileRoute("/_app/agents/$agentId")({
   loader: ({ params }) => {
-    const wf = mockWorkflows.find((w) => w.id === params.workflowId);
+    const wf = mockWorkflows.find((w) => w.id === params.agentId);
     if (!wf) throw notFound();
     return { workflow: wf };
   },
@@ -40,7 +40,7 @@ function WorkflowDetail() {
     <div className="space-y-6">
       {/* Breadcrumb */}
       <div className="text-[13px] text-text-secondary flex items-center gap-1">
-        <Link to="/library" className="hover:text-text-primary">
+        <Link to="/agents" className="hover:text-text-primary">
           Library
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />

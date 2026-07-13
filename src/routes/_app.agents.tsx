@@ -159,7 +159,7 @@ function WorkflowCard({ w }: { w: Workflow }) {
         </button>
         <Link
           to="/agents/$agentId"
-          params={{ workflowId: w.id }}
+          params={{ agentId: w.id }}
           className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary"
         >
           Configure <ChevronRight className="w-4 h-4" />
