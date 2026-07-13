@@ -138,6 +138,7 @@ export function Sidebar() {
               {mockUser.name}
             </div>
           </div>
+          <ThemeToggle compact />
           <span className="text-[10px] uppercase tracking-wide bg-raised text-text-secondary px-1.5 py-0.5 rounded">
             {plan}
           </span>
