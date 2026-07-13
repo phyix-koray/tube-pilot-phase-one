@@ -224,12 +224,16 @@ function RunAgentWizard({
   const [autoUpload, setAutoUpload] = useState(true);
   const [visibility, setVisibility] = useState<"unlisted" | "public" | "private">("unlisted");
 
-  // Schedule
-  const [mode, setMode] = useState<"one-shot" | "daily" | "weekly">("one-shot");
+  // Schedule — default to daily recurring
+  const [mode, setMode] = useState<"one-shot" | "daily" | "weekly">("daily");
   const [when, setWhen] = useState<"now" | "later">("now");
   const [scheduleAt, setScheduleAt] = useState("14:30");
-  const [tz, setTz] = useState("Europe/Istanbul");
+  const [tz, setTz] = useState("Europe/Istanbul|+03:00");
   const [weeklyDay, setWeeklyDay] = useState("Mon");
+
+  // Image guideline (skill) — auto-drafted from theme, editable
+  const [imageGuideline, setImageGuideline] = useState<string>("");
+  const [guidelineTouched, setGuidelineTouched] = useState(false);
 
   // Recurring theme (daily/weekly)
   const [themeSource, setThemeSource] = useState<"manual" | "channel">("channel");
