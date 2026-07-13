@@ -14,7 +14,7 @@ import {
 import { mockWorkflows, type WorkflowStep } from "@/mock/data";
 import { cn } from "@/lib/tp";
 
-export const Route = createFileRoute("/_app/library/$workflowId")({
+export const Route = createFileRoute("/_app/agents/$agentId")({
   loader: ({ params }) => {
     const wf = mockWorkflows.find((w) => w.id === params.workflowId);
     if (!wf) throw notFound();

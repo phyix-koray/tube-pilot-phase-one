@@ -15,10 +15,10 @@ import { Route as EditorVideoIdRouteImport } from './routes/editor.$videoId'
 import { Route as AppVideosRouteImport } from './routes/_app.videos'
 import { Route as AppSkillsRouteImport } from './routes/_app.skills'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppLibraryRouteImport } from './routes/_app.library'
 import { Route as AppChannelsRouteImport } from './routes/_app.channels'
+import { Route as AppAgentsRouteImport } from './routes/_app.agents'
 import { Route as AppSkillsSkillIdRouteImport } from './routes/_app.skills.$skillId'
-import { Route as AppLibraryWorkflowIdRouteImport } from './routes/_app.library.$workflowId'
+import { Route as AppAgentsAgentIdRouteImport } from './routes/_app.agents.$agentId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -49,14 +49,14 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppLibraryRoute = AppLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppChannelsRoute = AppChannelsRouteImport.update({
   id: '/channels',
   path: '/channels',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAgentsRoute = AppAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSkillsSkillIdRoute = AppSkillsSkillIdRouteImport.update({
@@ -64,81 +64,81 @@ const AppSkillsSkillIdRoute = AppSkillsSkillIdRouteImport.update({
   path: '/$skillId',
   getParentRoute: () => AppSkillsRoute,
 } as any)
-const AppLibraryWorkflowIdRoute = AppLibraryWorkflowIdRouteImport.update({
-  id: '/$workflowId',
-  path: '/$workflowId',
-  getParentRoute: () => AppLibraryRoute,
+const AppAgentsAgentIdRoute = AppAgentsAgentIdRouteImport.update({
+  id: '/$agentId',
+  path: '/$agentId',
+  getParentRoute: () => AppAgentsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
-  '/library': typeof AppLibraryRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/skills': typeof AppSkillsRouteWithChildren
   '/videos': typeof AppVideosRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
-  '/library/$workflowId': typeof AppLibraryWorkflowIdRoute
+  '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
-  '/library': typeof AppLibraryRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/skills': typeof AppSkillsRouteWithChildren
   '/videos': typeof AppVideosRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
-  '/library/$workflowId': typeof AppLibraryWorkflowIdRoute
+  '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/_app/agents': typeof AppAgentsRouteWithChildren
   '/_app/channels': typeof AppChannelsRoute
-  '/_app/library': typeof AppLibraryRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
   '/_app/skills': typeof AppSkillsRouteWithChildren
   '/_app/videos': typeof AppVideosRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
-  '/_app/library/$workflowId': typeof AppLibraryWorkflowIdRoute
+  '/_app/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/_app/skills/$skillId': typeof AppSkillsSkillIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agents'
     | '/channels'
-    | '/library'
     | '/settings'
     | '/skills'
     | '/videos'
     | '/editor/$videoId'
-    | '/library/$workflowId'
+    | '/agents/$agentId'
     | '/skills/$skillId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agents'
     | '/channels'
-    | '/library'
     | '/settings'
     | '/skills'
     | '/videos'
     | '/editor/$videoId'
-    | '/library/$workflowId'
+    | '/agents/$agentId'
     | '/skills/$skillId'
   id:
     | '__root__'
     | '/'
     | '/_app'
+    | '/_app/agents'
     | '/_app/channels'
-    | '/_app/library'
     | '/_app/settings'
     | '/_app/skills'
     | '/_app/videos'
     | '/editor/$videoId'
-    | '/_app/library/$workflowId'
+    | '/_app/agents/$agentId'
     | '/_app/skills/$skillId'
   fileRoutesById: FileRoutesById
 }
@@ -192,18 +192,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/library': {
-      id: '/_app/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof AppLibraryRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/channels': {
       id: '/_app/channels'
       path: '/channels'
       fullPath: '/channels'
       preLoaderRoute: typeof AppChannelsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/agents': {
+      id: '/_app/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AppAgentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/skills/$skillId': {
@@ -213,26 +213,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSkillsSkillIdRouteImport
       parentRoute: typeof AppSkillsRoute
     }
-    '/_app/library/$workflowId': {
-      id: '/_app/library/$workflowId'
-      path: '/$workflowId'
-      fullPath: '/library/$workflowId'
-      preLoaderRoute: typeof AppLibraryWorkflowIdRouteImport
-      parentRoute: typeof AppLibraryRoute
+    '/_app/agents/$agentId': {
+      id: '/_app/agents/$agentId'
+      path: '/$agentId'
+      fullPath: '/agents/$agentId'
+      preLoaderRoute: typeof AppAgentsAgentIdRouteImport
+      parentRoute: typeof AppAgentsRoute
     }
   }
 }
 
-interface AppLibraryRouteChildren {
-  AppLibraryWorkflowIdRoute: typeof AppLibraryWorkflowIdRoute
+interface AppAgentsRouteChildren {
+  AppAgentsAgentIdRoute: typeof AppAgentsAgentIdRoute
 }
 
-const AppLibraryRouteChildren: AppLibraryRouteChildren = {
-  AppLibraryWorkflowIdRoute: AppLibraryWorkflowIdRoute,
+const AppAgentsRouteChildren: AppAgentsRouteChildren = {
+  AppAgentsAgentIdRoute: AppAgentsAgentIdRoute,
 }
 
-const AppLibraryRouteWithChildren = AppLibraryRoute._addFileChildren(
-  AppLibraryRouteChildren,
+const AppAgentsRouteWithChildren = AppAgentsRoute._addFileChildren(
+  AppAgentsRouteChildren,
 )
 
 interface AppSkillsRouteChildren {
@@ -248,16 +248,16 @@ const AppSkillsRouteWithChildren = AppSkillsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppChannelsRoute: typeof AppChannelsRoute
-  AppLibraryRoute: typeof AppLibraryRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppSkillsRoute: typeof AppSkillsRouteWithChildren
   AppVideosRoute: typeof AppVideosRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAgentsRoute: AppAgentsRouteWithChildren,
   AppChannelsRoute: AppChannelsRoute,
-  AppLibraryRoute: AppLibraryRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppSkillsRoute: AppSkillsRouteWithChildren,
   AppVideosRoute: AppVideosRoute,

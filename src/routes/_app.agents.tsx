@@ -21,7 +21,7 @@ import { cn } from "@/lib/tp";
 
 const iconMap = { Music, Film, BookOpen, Trophy } as const;
 
-export const Route = createFileRoute("/_app/library")({
+export const Route = createFileRoute("/_app/agents")({
   head: () => ({
     meta: [
       { title: "Library — TubePilot" },
