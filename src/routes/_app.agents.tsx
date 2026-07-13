@@ -24,14 +24,14 @@ const iconMap = { Music, Film, BookOpen, Trophy } as const;
 export const Route = createFileRoute("/_app/agents")({
   head: () => ({
     meta: [
-      { title: "Library — TubePilot" },
+      { title: "Agents — TubePilot" },
       {
         name: "description",
         content: "Browse and run your automated video workflows.",
       },
     ],
   }),
-  component: LibraryPage,
+  component: AgentsPage,
 });
 
 const cats = [
@@ -43,7 +43,7 @@ const cats = [
   "Custom",
 ] as const;
 
-function LibraryPage() {
+function AgentsPage() {
   const [cat, setCat] = useState<(typeof cats)[number]>("All");
   const pending = mockVideos.filter((v) => v.status === "pending_review");
 
@@ -71,7 +71,7 @@ function LibraryPage() {
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-semibold tracking-tight">Library</h1>
+          <h1 className="text-[28px] font-semibold tracking-tight">Agents</h1>
           <p className="text-[13px] text-text-secondary mt-1">
             Your automation modules
           </p>
@@ -158,7 +158,7 @@ function WorkflowCard({ w }: { w: Workflow }) {
           Run Now
         </button>
         <Link
-          to="/library/$workflowId"
+          to="/agents/$agentId"
           params={{ workflowId: w.id }}
           className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary"
         >
