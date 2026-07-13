@@ -186,6 +186,61 @@ const SUGGESTED_THEME =
 const SUGGESTED_TAGS =
   "slow jazz, soprano saxophone, Korean traditional hanok, rainy afternoon, clay teapot ambiance, paper screen acoustics, Seoul winter, meditative tempo, smoky intimacy";
 
+// Broad timezone catalog with GMT offset labels
+const TIMEZONES: Array<{ value: string; label: string }> = [
+  { value: "Pacific/Midway|-11:00", label: "GMT-11:00 · Midway" },
+  { value: "Pacific/Honolulu|-10:00", label: "GMT-10:00 · Honolulu" },
+  { value: "America/Anchorage|-09:00", label: "GMT-09:00 · Anchorage" },
+  { value: "America/Los_Angeles|-08:00", label: "GMT-08:00 · Los Angeles" },
+  { value: "America/Denver|-07:00", label: "GMT-07:00 · Denver" },
+  { value: "America/Chicago|-06:00", label: "GMT-06:00 · Chicago / Mexico City" },
+  { value: "America/New_York|-05:00", label: "GMT-05:00 · New York / Toronto" },
+  { value: "America/Halifax|-04:00", label: "GMT-04:00 · Halifax" },
+  { value: "America/Sao_Paulo|-03:00", label: "GMT-03:00 · São Paulo / Buenos Aires" },
+  { value: "Atlantic/Azores|-01:00", label: "GMT-01:00 · Azores" },
+  { value: "UTC|+00:00", label: "GMT+00:00 · UTC / London" },
+  { value: "Europe/Paris|+01:00", label: "GMT+01:00 · Paris / Berlin / Madrid" },
+  { value: "Europe/Athens|+02:00", label: "GMT+02:00 · Athens / Cairo" },
+  { value: "Europe/Istanbul|+03:00", label: "GMT+03:00 · Istanbul / Moscow / Riyadh" },
+  { value: "Asia/Dubai|+04:00", label: "GMT+04:00 · Dubai" },
+  { value: "Asia/Karachi|+05:00", label: "GMT+05:00 · Karachi" },
+  { value: "Asia/Kolkata|+05:30", label: "GMT+05:30 · India" },
+  { value: "Asia/Dhaka|+06:00", label: "GMT+06:00 · Dhaka" },
+  { value: "Asia/Bangkok|+07:00", label: "GMT+07:00 · Bangkok / Jakarta" },
+  { value: "Asia/Shanghai|+08:00", label: "GMT+08:00 · Shanghai / Singapore" },
+  { value: "Asia/Tokyo|+09:00", label: "GMT+09:00 · Tokyo / Seoul" },
+  { value: "Australia/Sydney|+10:00", label: "GMT+10:00 · Sydney" },
+  { value: "Pacific/Auckland|+12:00", label: "GMT+12:00 · Auckland" },
+];
+
+function tzLabel(v: string) {
+  return TIMEZONES.find((t) => t.value === v)?.label ?? v;
+}
+function tzOffset(v: string) {
+  const off = v.split("|")[1];
+  return off ? `GMT${off}` : v;
+}
+
+// Draft an image style guideline from the current theme text (mock "AI")
+function draftImageGuideline(theme: string): string {
+  const t = (theme || "").toLowerCase();
+  const bits: string[] = [];
+  bits.push("All generated visuals will share one consistent world:");
+  if (t.includes("hanok") || t.includes("seoul") || t.includes("korea"))
+    bits.push("• Interior of a softly lit Korean hanok — paper screens, dark timber beams, warm lantern glow.");
+  else if (t.includes("lofi") || t.includes("lo-fi") || t.includes("study"))
+    bits.push("• A cozy studio room with a rain-streaked window, warm desk lamp, plants and vinyl.");
+  else if (t.includes("jazz") || t.includes("lounge"))
+    bits.push("• The view from inside a luxury apartment — floor-to-ceiling windows over a city skyline.");
+  else
+    bits.push("• The view from inside a luxury home — tall windows framing a wide landscape outside.");
+  bits.push("• Every scene shot at golden hour / sunset — long amber light, deep shadows.");
+  bits.push("• Cinematic 16:9, photorealistic, shallow depth of field, film grain, no text, no people facing camera.");
+  bits.push("• Consistent color palette: warm amber, dusty rose, deep teal shadows.");
+  return bits.join("\n");
+}
+
+
 function RunAgentWizard({
   agent,
   onClose,
