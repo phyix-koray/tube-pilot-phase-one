@@ -199,26 +199,9 @@ function RunAgentWizard({
   const accent = agent.accent ?? "var(--tp-subtle)";
   const isMusic = agent.id === "music-composer";
 
-  const RUN_STEPS: Step[] = isMusic
-    ? [
-        { key: "channel", title: "Channel" },
-        { key: "content", title: "Content" },
-        { key: "media", title: "Media" },
-        { key: "schedule", title: "Schedule" },
-        { key: "publishing", title: "Publishing" },
-        { key: "review", title: "Review" },
-      ]
-    : [
-        { key: "channel", title: "Channel" },
-        { key: "inputs", title: "Inputs" },
-        { key: "schedule", title: "Schedule" },
-        { key: "review", title: "Review" },
-      ];
-
   const suggestedChannel =
     mockChannels.find((c) => c.usedIn?.includes(agent.name)) ?? mockChannels[0];
 
-  const [step, setStep] = useState(0);
   const [channelId, setChannelId] = useState(suggestedChannel.id);
 
   // Generic
@@ -236,23 +219,86 @@ function RunAgentWizard({
   const [songsPerRun, setSongsPerRun] = useState(2);
   const [mergeRepeats, setMergeRepeats] = useState(2);
   const [instrumental, setInstrumental] = useState(true);
-  const [keywordModel, setKeywordModel] = useState<"claude" | "gemini" | "chatgpt">("claude");
   const [makeThumbnail, setMakeThumbnail] = useState(true);
   const [outputMode, setOutputMode] = useState<"gorsel" | "gorsel-video">("gorsel");
   const [autoUpload, setAutoUpload] = useState(true);
   const [visibility, setVisibility] = useState<"unlisted" | "public" | "private">("unlisted");
 
   // Schedule
-  const [mode, setMode] = useState<"one-shot" | "auto-daily">("one-shot");
+  const [mode, setMode] = useState<"one-shot" | "daily" | "weekly">("one-shot");
   const [when, setWhen] = useState<"now" | "later">("now");
   const [scheduleAt, setScheduleAt] = useState("14:30");
   const [tz, setTz] = useState("Europe/Istanbul");
+  const [weeklyDay, setWeeklyDay] = useState("Mon");
 
+  // Recurring theme (daily/weekly)
+  const [themeSource, setThemeSource] = useState<"manual" | "channel">("channel");
+  const [channelRef, setChannelRef] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzed, setAnalyzed] = useState<string | null>(null);
+  const [manualTheme, setManualTheme] = useState("");
+
+  // Video length (all music runs)
+  const LENGTH_OPTIONS = [
+    { key: "1-3m", label: "1–3 min" },
+    { key: "3-5m", label: "3–5 min" },
+    { key: "5-10m", label: "5–10 min" },
+    { key: "10-20m", label: "10–20 min" },
+    { key: "20-30m", label: "20–30 min" },
+    { key: "30-60m", label: "30–60 min" },
+    { key: "1-3h", label: "1–3 hours" },
+    { key: "3-6h", label: "3–6 hours" },
+    { key: "6-12h", label: "6–12 hours" },
+    { key: "12-24h", label: "12–24 hours" },
+  ] as const;
+  const [videoLength, setVideoLength] = useState<string>("5-10m");
+
+  const isRecurring = mode === "daily" || mode === "weekly";
+
+  const RUN_STEPS: Step[] = isMusic
+    ? [
+        { key: "channel", title: "Channel" },
+        { key: "schedule", title: "Schedule" },
+        ...(isRecurring
+          ? [{ key: "theme", title: "Theme" } as Step]
+          : [{ key: "content", title: "Content" } as Step]),
+        { key: "length", title: "Video length" },
+        { key: "media", title: "Media" },
+        { key: "publishing", title: "Publishing" },
+        { key: "review", title: "Review" },
+      ]
+    : [
+        { key: "channel", title: "Channel" },
+        { key: "inputs", title: "Inputs" },
+        { key: "schedule", title: "Schedule" },
+        { key: "review", title: "Review" },
+      ];
+
+  const [step, setStep] = useState(0);
+  const clampedStep = Math.min(step, RUN_STEPS.length - 1);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
 
   const channel = mockChannels.find((c) => c.id === channelId)!;
   const totalTracks = songsPerRun * mergeRepeats;
+  const effectiveTheme = isRecurring
+    ? themeSource === "channel"
+      ? (analyzed ?? `Pending analysis of ${channelRef || "…"}`)
+      : manualTheme || "(manual theme not set)"
+    : theme;
+  const lengthLabel =
+    LENGTH_OPTIONS.find((o) => o.key === videoLength)?.label ?? videoLength;
+
+  const analyze = () => {
+    if (!channelRef.trim()) return;
+    setAnalyzing(true);
+    setTimeout(() => {
+      setAnalyzed(
+        `Long-form lo-fi and ambient jazz for late-night study sessions, echoing the mood of "${channelRef.trim()}" — warm tape textures, rainy-window atmospherics, minimal vocals.`,
+      );
+      setAnalyzing(false);
+    }, 900);
+  };
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
   const prev = () => setStep((s) => Math.max(s - 1, 0));
@@ -265,7 +311,7 @@ function RunAgentWizard({
     }, 900);
   };
 
-  const stepKey = RUN_STEPS[step].key;
+  const stepKey = RUN_STEPS[clampedStep].key;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
