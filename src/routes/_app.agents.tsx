@@ -199,26 +199,9 @@ function RunAgentWizard({
   const accent = agent.accent ?? "var(--tp-subtle)";
   const isMusic = agent.id === "music-composer";
 
-  const RUN_STEPS: Step[] = isMusic
-    ? [
-        { key: "channel", title: "Channel" },
-        { key: "content", title: "Content" },
-        { key: "media", title: "Media" },
-        { key: "schedule", title: "Schedule" },
-        { key: "publishing", title: "Publishing" },
-        { key: "review", title: "Review" },
-      ]
-    : [
-        { key: "channel", title: "Channel" },
-        { key: "inputs", title: "Inputs" },
-        { key: "schedule", title: "Schedule" },
-        { key: "review", title: "Review" },
-      ];
-
   const suggestedChannel =
     mockChannels.find((c) => c.usedIn?.includes(agent.name)) ?? mockChannels[0];
 
-  const [step, setStep] = useState(0);
   const [channelId, setChannelId] = useState(suggestedChannel.id);
 
   // Generic
@@ -236,23 +219,86 @@ function RunAgentWizard({
   const [songsPerRun, setSongsPerRun] = useState(2);
   const [mergeRepeats, setMergeRepeats] = useState(2);
   const [instrumental, setInstrumental] = useState(true);
-  const [keywordModel, setKeywordModel] = useState<"claude" | "gemini" | "chatgpt">("claude");
   const [makeThumbnail, setMakeThumbnail] = useState(true);
   const [outputMode, setOutputMode] = useState<"gorsel" | "gorsel-video">("gorsel");
   const [autoUpload, setAutoUpload] = useState(true);
   const [visibility, setVisibility] = useState<"unlisted" | "public" | "private">("unlisted");
 
   // Schedule
-  const [mode, setMode] = useState<"one-shot" | "auto-daily">("one-shot");
+  const [mode, setMode] = useState<"one-shot" | "daily" | "weekly">("one-shot");
   const [when, setWhen] = useState<"now" | "later">("now");
   const [scheduleAt, setScheduleAt] = useState("14:30");
   const [tz, setTz] = useState("Europe/Istanbul");
+  const [weeklyDay, setWeeklyDay] = useState("Mon");
 
+  // Recurring theme (daily/weekly)
+  const [themeSource, setThemeSource] = useState<"manual" | "channel">("channel");
+  const [channelRef, setChannelRef] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzed, setAnalyzed] = useState<string | null>(null);
+  const [manualTheme, setManualTheme] = useState("");
+
+  // Video length (all music runs)
+  const LENGTH_OPTIONS = [
+    { key: "1-3m", label: "1–3 min" },
+    { key: "3-5m", label: "3–5 min" },
+    { key: "5-10m", label: "5–10 min" },
+    { key: "10-20m", label: "10–20 min" },
+    { key: "20-30m", label: "20–30 min" },
+    { key: "30-60m", label: "30–60 min" },
+    { key: "1-3h", label: "1–3 hours" },
+    { key: "3-6h", label: "3–6 hours" },
+    { key: "6-12h", label: "6–12 hours" },
+    { key: "12-24h", label: "12–24 hours" },
+  ] as const;
+  const [videoLength, setVideoLength] = useState<string>("5-10m");
+
+  const isRecurring = mode === "daily" || mode === "weekly";
+
+  const RUN_STEPS: Step[] = isMusic
+    ? [
+        { key: "channel", title: "Channel" },
+        { key: "schedule", title: "Schedule" },
+        ...(isRecurring
+          ? [{ key: "theme", title: "Theme" } as Step]
+          : [{ key: "content", title: "Content" } as Step]),
+        { key: "length", title: "Video length" },
+        { key: "media", title: "Media" },
+        { key: "publishing", title: "Publishing" },
+        { key: "review", title: "Review" },
+      ]
+    : [
+        { key: "channel", title: "Channel" },
+        { key: "inputs", title: "Inputs" },
+        { key: "schedule", title: "Schedule" },
+        { key: "review", title: "Review" },
+      ];
+
+  const [step, setStep] = useState(0);
+  const clampedStep = Math.min(step, RUN_STEPS.length - 1);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
 
   const channel = mockChannels.find((c) => c.id === channelId)!;
   const totalTracks = songsPerRun * mergeRepeats;
+  const effectiveTheme = isRecurring
+    ? themeSource === "channel"
+      ? (analyzed ?? `Pending analysis of ${channelRef || "…"}`)
+      : manualTheme || "(manual theme not set)"
+    : theme;
+  const lengthLabel =
+    LENGTH_OPTIONS.find((o) => o.key === videoLength)?.label ?? videoLength;
+
+  const analyze = () => {
+    if (!channelRef.trim()) return;
+    setAnalyzing(true);
+    setTimeout(() => {
+      setAnalyzed(
+        `Long-form lo-fi and ambient jazz for late-night study sessions, echoing the mood of "${channelRef.trim()}" — warm tape textures, rainy-window atmospherics, minimal vocals.`,
+      );
+      setAnalyzing(false);
+    }, 900);
+  };
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
   const prev = () => setStep((s) => Math.max(s - 1, 0));
@@ -265,7 +311,7 @@ function RunAgentWizard({
     }, 900);
   };
 
-  const stepKey = RUN_STEPS[step].key;
+  const stepKey = RUN_STEPS[clampedStep].key;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
@@ -312,7 +358,7 @@ function RunAgentWizard({
         {/* Stepper */}
         {!done && (
           <div className="px-5 mt-5">
-            <StepBar steps={RUN_STEPS} current={step} accent={accent} onJump={setStep} />
+            <StepBar steps={RUN_STEPS} current={clampedStep} accent={accent} onJump={setStep} />
           </div>
         )}
 
@@ -386,6 +432,9 @@ function RunAgentWizard({
             </div>
           ) : stepKey === "content" && isMusic ? (
             <div className="space-y-4">
+              <div className="text-[12px] text-text-tertiary">
+                One-shot run — set the exact theme and Suno keywords for this single video.
+              </div>
               <Field label="AI-suggested theme">
                 <div className="flex items-center gap-2 mb-1.5">
                   <button
@@ -396,9 +445,6 @@ function RunAgentWizard({
                     <Sparkles className="w-3 h-3" />
                     Regenerate
                   </button>
-                  <span className="text-[11px] text-text-tertiary">
-                    · Model: {keywordModel}
-                  </span>
                 </div>
                 <textarea
                   rows={4}
@@ -440,23 +486,104 @@ function RunAgentWizard({
               <div className="text-[11px] text-text-tertiary rounded-md bg-raised/60 border border-subtle p-2.5">
                 → {songsPerRun} songs × {mergeRepeats} loops = <b>{totalTracks}</b> tracks in the merged file.
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Vocals">
-                  <Select
-                    value={instrumental ? "instrumental" : "with-vocals"}
-                    onChange={(v) => setInstrumental(v === "instrumental")}
-                  >
-                    <option value="instrumental">Instrumental (no vocals)</option>
-                    <option value="with-vocals">With vocals</option>
-                  </Select>
+              <Field label="Vocals">
+                <Select
+                  value={instrumental ? "instrumental" : "with-vocals"}
+                  onChange={(v) => setInstrumental(v === "instrumental")}
+                >
+                  <option value="instrumental">Instrumental (no vocals)</option>
+                  <option value="with-vocals">With vocals</option>
+                </Select>
+              </Field>
+            </div>
+          ) : stepKey === "theme" && isMusic ? (
+            <div className="space-y-4">
+              <div className="text-[12px] text-text-tertiary">
+                Recurring run — pick a stable theme so every scheduled video stays on-brand.
+              </div>
+              <Field label="Theme source">
+                <div className="grid grid-cols-2 gap-2">
+                  <ChoiceOption
+                    active={themeSource === "channel"}
+                    accent={accent}
+                    title="Analyze a YouTube channel"
+                    subtitle="AI detects the channel's theme"
+                    onClick={() => setThemeSource("channel")}
+                  />
+                  <ChoiceOption
+                    active={themeSource === "manual"}
+                    accent={accent}
+                    title="Write it manually"
+                    subtitle="Full creative control"
+                    onClick={() => setThemeSource("manual")}
+                  />
+                </div>
+              </Field>
+
+              {themeSource === "channel" ? (
+                <>
+                  <Field label="YouTube channel name or URL">
+                    <div className="flex gap-2">
+                      <input
+                        value={channelRef}
+                        onChange={(e) => {
+                          setChannelRef(e.target.value);
+                          setAnalyzed(null);
+                        }}
+                        placeholder="@lofigirl  or  https://youtube.com/@lofigirl"
+                        className="flex-1 h-9 rounded-md bg-raised border border-subtle px-2.5 text-[13px]"
+                      />
+                      <button
+                        type="button"
+                        onClick={analyze}
+                        disabled={!channelRef.trim() || analyzing}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 disabled:opacity-60 px-3 h-9 text-[13px] font-medium"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {analyzing ? "Analyzing…" : "Analyze"}
+                      </button>
+                    </div>
+                  </Field>
+                  {analyzed && (
+                    <div
+                      className="rounded-md bg-raised p-3 text-[13px] whitespace-pre-wrap"
+                      style={{ border: `2px solid ${accent}` }}
+                    >
+                      <div className="text-[10px] uppercase tracking-wide text-text-tertiary mb-1">
+                        Detected theme
+                      </div>
+                      {analyzed}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Field label="Channel theme">
+                  <textarea
+                    rows={5}
+                    value={manualTheme}
+                    onChange={(e) => setManualTheme(e.target.value)}
+                    placeholder="e.g. Late-night lo-fi jazz for study sessions — warm tape textures, rainy-window atmosphere, minimal vocals."
+                    className="w-full rounded-md bg-raised border border-subtle p-2.5 text-[13px] resize-none"
+                  />
                 </Field>
-                <Field label="AI keyword model">
-                  <Select value={keywordModel} onChange={(v) => setKeywordModel(v as typeof keywordModel)}>
-                    <option value="claude">claude</option>
-                    <option value="gemini">gemini</option>
-                    <option value="chatgpt">chatgpt</option>
-                  </Select>
-                </Field>
+              )}
+            </div>
+          ) : stepKey === "length" && isMusic ? (
+            <div className="space-y-3">
+              <div className="text-[12px] text-text-tertiary">
+                How long should each published video be? Ranges up to 24 hours.
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {LENGTH_OPTIONS.map((o) => (
+                  <ChoiceOption
+                    key={o.key}
+                    active={videoLength === o.key}
+                    accent={accent}
+                    title={o.label}
+                    subtitle=""
+                    onClick={() => setVideoLength(o.key)}
+                  />
+                ))}
               </div>
             </div>
           ) : stepKey === "inputs" ? (
@@ -528,28 +655,68 @@ function RunAgentWizard({
             </div>
           ) : stepKey === "schedule" ? (
             <div className="space-y-4">
-              {isMusic && (
-                <Field label="Run mode">
-                  <div className="grid grid-cols-2 gap-2">
-                    <ChoiceOption
-                      active={mode === "one-shot"}
-                      accent={accent}
-                      title="One-shot"
-                      subtitle="Runs once, then stops"
-                      onClick={() => setMode("one-shot")}
-                    />
-                    <ChoiceOption
-                      active={mode === "auto-daily"}
-                      accent={accent}
-                      title="Auto-daily"
-                      subtitle="Runs every day until you stop it"
-                      onClick={() => setMode("auto-daily")}
-                    />
-                  </div>
-                </Field>
-              )}
+              {isMusic ? (
+                <>
+                  <Field label="Run mode">
+                    <div className="grid grid-cols-3 gap-2">
+                      <ChoiceOption
+                        active={mode === "one-shot"}
+                        accent={accent}
+                        title="One-shot"
+                        subtitle="Runs once, then stops"
+                        onClick={() => setMode("one-shot")}
+                      />
+                      <ChoiceOption
+                        active={mode === "daily"}
+                        accent={accent}
+                        title="Daily"
+                        subtitle="Every day at a fixed time"
+                        onClick={() => setMode("daily")}
+                      />
+                      <ChoiceOption
+                        active={mode === "weekly"}
+                        accent={accent}
+                        title="Weekly"
+                        subtitle="Once per week"
+                        onClick={() => setMode("weekly")}
+                      />
+                    </div>
+                  </Field>
 
-              {(!isMusic || mode === "one-shot") && (
+                  {mode === "one-shot" && (
+                    <Field label="When">
+                      <div className="grid grid-cols-2 gap-2">
+                        <ChoiceOption
+                          active={when === "now"}
+                          accent={accent}
+                          title="Run now"
+                          subtitle="Starts immediately"
+                          onClick={() => setWhen("now")}
+                        />
+                        <ChoiceOption
+                          active={when === "later"}
+                          accent={accent}
+                          title="Schedule"
+                          subtitle="Pick a time today"
+                          onClick={() => setWhen("later")}
+                        />
+                      </div>
+                    </Field>
+                  )}
+
+                  {mode === "weekly" && (
+                    <Field label="Day of week">
+                      <Select value={weeklyDay} onChange={setWeeklyDay}>
+                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                          <option key={d} value={d}>
+                            {d}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  )}
+                </>
+              ) : (
                 <Field label="When">
                   <div className="grid grid-cols-2 gap-2">
                     <ChoiceOption
@@ -570,9 +737,9 @@ function RunAgentWizard({
                 </Field>
               )}
 
-              {(isMusic && mode === "auto-daily") || (!isMusic && when === "later") || (isMusic && mode === "one-shot" && when === "later") ? (
+              {(isRecurring || (!isMusic && when === "later") || (isMusic && mode === "one-shot" && when === "later")) && (
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label={isMusic && mode === "auto-daily" ? "Daily run time" : "Time (local)"}>
+                  <Field label={isRecurring ? "Run time" : "Time (local)"}>
                     <input
                       type="time"
                       value={scheduleAt}
@@ -588,7 +755,7 @@ function RunAgentWizard({
                     </Select>
                   </Field>
                 </div>
-              ) : null}
+              )}
             </div>
           ) : stepKey === "publishing" ? (
             <div className="space-y-4">
@@ -644,25 +811,30 @@ function RunAgentWizard({
                 />
                 {isMusic ? (
                   <>
-                    <ReviewRow label="Theme" value={theme} multiline />
-                    <ReviewRow label="Tags" value={tags} multiline />
-                    <ReviewRow
-                      label="Suno"
-                      value={`${songsPerRun} songs × ${mergeRepeats} loops (${totalTracks} tracks) · ${instrumental ? "Instrumental" : "With vocals"} · ${keywordModel}`}
-                    />
-                    <ReviewRow
-                      label="Media"
-                      value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only" : "Image + video"}`}
-                    />
                     <ReviewRow
                       label="Schedule"
                       value={
-                        mode === "auto-daily"
-                          ? `Auto-daily · every day at ${scheduleAt} ${tz}`
-                          : when === "now"
-                            ? "One-shot · run immediately"
-                            : `One-shot · today ${scheduleAt} ${tz}`
+                        mode === "daily"
+                          ? `Daily · every day at ${scheduleAt} ${tz}`
+                          : mode === "weekly"
+                            ? `Weekly · every ${weeklyDay} at ${scheduleAt} ${tz}`
+                            : when === "now"
+                              ? "One-shot · run immediately"
+                              : `One-shot · today ${scheduleAt} ${tz}`
                       }
+                    />
+                    <ReviewRow label="Theme" value={effectiveTheme} multiline />
+                    {!isRecurring && <ReviewRow label="Tags" value={tags} multiline />}
+                    <ReviewRow label="Video length" value={lengthLabel} />
+                    {!isRecurring && (
+                      <ReviewRow
+                        label="Suno"
+                        value={`${songsPerRun} songs × ${mergeRepeats} loops (${totalTracks} tracks) · ${instrumental ? "Instrumental" : "With vocals"}`}
+                      />
+                    )}
+                    <ReviewRow
+                      label="Media"
+                      value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only" : "Image + video"}`}
                     />
                     <ReviewRow
                       label="Publish"
@@ -708,17 +880,17 @@ function RunAgentWizard({
           ) : (
             <>
               <button
-                onClick={step === 0 ? onClose : prev}
+                onClick={clampedStep === 0 ? onClose : prev}
                 className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2.5 h-8 text-[13px] text-text-secondary"
               >
                 <ChevronLeft className="w-4 h-4" />
-                {step === 0 ? "Cancel" : "Back"}
+                {clampedStep === 0 ? "Cancel" : "Back"}
               </button>
               <div className="flex items-center gap-2">
                 <div className="text-[11px] text-text-tertiary">
-                  Step {step + 1} of {RUN_STEPS.length}
+                  Step {clampedStep + 1} of {RUN_STEPS.length}
                 </div>
-                {step < RUN_STEPS.length - 1 ? (
+                {clampedStep < RUN_STEPS.length - 1 ? (
                   <button
                     onClick={next}
                     className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium"
@@ -735,8 +907,10 @@ function RunAgentWizard({
                     <Play className="w-3.5 h-3.5" />
                     {running
                       ? "Starting…"
-                      : isMusic && mode === "auto-daily"
-                        ? "Start daily"
+                      : isMusic && isRecurring
+                        ? mode === "daily"
+                          ? "Start daily"
+                          : "Start weekly"
                         : when === "now"
                           ? "Run now"
                           : "Schedule"}
