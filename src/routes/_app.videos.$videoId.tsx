@@ -22,6 +22,13 @@ const statusPill: Record<VideoStatus, { label: string; className: string }> = {
   failed: { label: "Failed", className: "bg-red/15 text-red border border-red/30" },
 };
 
+const fmt = (iso: string) =>
+  new Date(iso).toLocaleString("en-US", {
+    timeZone: "UTC",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }) + " UTC";
+
 function VideoDetailPage() {
   const { videoId } = useParams({ from: "/_app/videos/$videoId" });
   const navigate = useNavigate();
