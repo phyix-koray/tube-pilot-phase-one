@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, RefreshCcw, Trash2, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Plus, RefreshCcw, Trash2, ChevronRight, X, CheckCircle2, Loader2 } from "lucide-react";
 import { mockChannels, type Channel } from "@/mock/data";
 
 export const Route = createFileRoute("/_app/channels")({
@@ -16,6 +17,9 @@ export const Route = createFileRoute("/_app/channels")({
 });
 
 function ChannelsPage() {
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -25,7 +29,10 @@ function ChannelsPage() {
             Connect the YouTube channels your agents publish to.
           </p>
         </div>
-        <button className="inline-flex items-center gap-1.5 rounded-lg bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3.5 h-9 text-[13px] font-medium">
+        <button
+          onClick={() => setConnectOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3.5 h-9 text-[13px] font-medium"
+        >
           <Plus className="w-4 h-4" />
           Connect Channel
         </button>
@@ -36,6 +43,24 @@ function ChannelsPage() {
           <ChannelCard key={c.id} c={c} />
         ))}
       </div>
+
+      {connectOpen && (
+        <GoogleAuthModal
+          onClose={() => setConnectOpen(false)}
+          onDone={(name) => {
+            setConnectOpen(false);
+            setToast(`Connected ${name} via Google.`);
+            setTimeout(() => setToast(null), 3200);
+          }}
+        />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg bg-text-primary text-[color:var(--tp-base)] px-4 py-3 text-[13px] font-medium card-shadow">
+          <CheckCircle2 className="w-4 h-4" />
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
@@ -96,5 +121,156 @@ function ChannelCard({ c }: { c: Channel }) {
         </button>
       </div>
     </div>
+  );
+}
+
+/* -------------------------------------------------------------
+ * Mock Google / YouTube OAuth flow
+ * ----------------------------------------------------------- */
+
+const GOOGLE_ACCOUNTS = [
+  { email: "koray@example.com", name: "Koray Bakirkure", channel: "Coastal Sounds" },
+  { email: "koray.creator@gmail.com", name: "Koray B. (Creator)", channel: "New Yolk Eggonomist" },
+  { email: "studio@tubepilot.co", name: "TubePilot Studio", channel: "Stickman United" },
+];
+
+function GoogleAuthModal({
+  onClose,
+  onDone,
+}: {
+  onClose: () => void;
+  onDone: (channelName: string) => void;
+}) {
+  const [phase, setPhase] = useState<"pick" | "consent" | "loading">("pick");
+  const [selected, setSelected] = useState<(typeof GOOGLE_ACCOUNTS)[number] | null>(null);
+
+  const goConsent = (acc: (typeof GOOGLE_ACCOUNTS)[number]) => {
+    setSelected(acc);
+    setPhase("consent");
+  };
+
+  const allow = () => {
+    if (!selected) return;
+    setPhase("loading");
+    setTimeout(() => onDone(selected.channel), 1100);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <button
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+      />
+      <div className="relative w-full max-w-md rounded-2xl bg-white text-[#202124] card-shadow overflow-hidden">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-md hover:bg-black/5 flex items-center justify-center text-[#5f6368] z-10"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Google header */}
+        <div className="px-6 pt-6 pb-3">
+          <GoogleLogo />
+          <div className="mt-4 text-[22px] leading-tight text-[#202124]">
+            {phase === "pick" && "Choose an account"}
+            {phase === "consent" && "TubePilot wants access to your Google Account"}
+            {phase === "loading" && "Connecting…"}
+          </div>
+          <div className="mt-1 text-[13px] text-[#5f6368]">
+            {phase === "pick" && "to continue to TubePilot"}
+            {phase === "consent" && selected?.email}
+          </div>
+        </div>
+
+        {phase === "pick" && (
+          <div className="px-2 pb-3">
+            {GOOGLE_ACCOUNTS.map((a) => (
+              <button
+                key={a.email}
+                onClick={() => goConsent(a)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-md hover:bg-black/5 text-left"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#1a73e8] text-white flex items-center justify-center text-[13px] font-medium">
+                  {a.name.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[14px] font-medium truncate">{a.name}</div>
+                  <div className="text-[12px] text-[#5f6368] truncate">{a.email}</div>
+                </div>
+              </button>
+            ))}
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md hover:bg-black/5 text-left text-[14px] text-[#1a73e8]">
+              <div className="w-8 h-8 rounded-full border border-[#dadce0] flex items-center justify-center text-[#5f6368]">+</div>
+              Use another account
+            </button>
+          </div>
+        )}
+
+        {phase === "consent" && selected && (
+          <div className="px-6 pb-6">
+            <div className="text-[13px] text-[#5f6368] mb-3">
+              This will allow TubePilot to:
+            </div>
+            <ul className="space-y-2 text-[13px] text-[#202124]">
+              <ConsentRow text="See, edit, and permanently delete your YouTube videos, ratings, comments and captions." />
+              <ConsentRow text="Manage your YouTube account (upload, edit metadata, thumbnails, schedule publishing)." />
+              <ConsentRow text="See your primary Google Account email address." />
+            </ul>
+            <div className="mt-5 text-[12px] text-[#5f6368] leading-relaxed">
+              Make sure you trust TubePilot. You can remove this access anytime in your Google Account settings.
+            </div>
+            <div className="mt-6 flex items-center justify-between">
+              <button
+                onClick={() => setPhase("pick")}
+                className="text-[13px] text-[#1a73e8] hover:underline"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={allow}
+                className="rounded-md bg-[#1a73e8] hover:bg-[#1765cc] text-white px-5 h-9 text-[13px] font-medium"
+              >
+                Allow
+              </button>
+            </div>
+          </div>
+        )}
+
+        {phase === "loading" && (
+          <div className="px-6 pb-8 flex items-center gap-3 text-[13px] text-[#5f6368]">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Fetching your YouTube channels…
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConsentRow({ text }: { text: string }) {
+  return (
+    <li className="flex items-start gap-2">
+      <div className="w-4 h-4 rounded-full bg-[#e8f0fe] text-[#1a73e8] flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+        ✓
+      </div>
+      <span>{text}</span>
+    </li>
+  );
+}
+
+function GoogleLogo() {
+  return (
+    <svg width="74" height="24" viewBox="0 0 74 24" aria-label="Google">
+      <text x="0" y="19" fontFamily="Arial, sans-serif" fontSize="20" fontWeight="500">
+        <tspan fill="#4285F4">G</tspan>
+        <tspan fill="#EA4335">o</tspan>
+        <tspan fill="#FBBC05">o</tspan>
+        <tspan fill="#4285F4">g</tspan>
+        <tspan fill="#34A853">l</tspan>
+        <tspan fill="#EA4335">e</tspan>
+      </text>
+    </svg>
   );
 }
