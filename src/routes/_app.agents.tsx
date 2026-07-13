@@ -240,6 +240,22 @@ function draftImageGuideline(theme: string): string {
   return bits.join("\n");
 }
 
+function draftVideoGuideline(theme: string): string {
+  const t = (theme || "").toLowerCase();
+  const bits: string[] = [];
+  bits.push("Looping background video (seamless 6–10s loop, no cuts):");
+  if (t.includes("hanok") || t.includes("seoul"))
+    bits.push("• Slow push-in through paper screens, rain drifting past the window, lantern flicker.");
+  else if (t.includes("lofi") || t.includes("study"))
+    bits.push("• Rain streaks sliding down the window, warm lamp bloom, subtle steam from a mug.");
+  else
+    bits.push("• Gentle parallax across the skyline outside, drifting clouds, warm sunlight shifting on the wall.");
+  bits.push("• Ultra-slow motion, near-static — motion barely perceptible, meant to sit behind audio.");
+  bits.push("• Same color palette and lighting as the thumbnail image — must feel like the same world.");
+  bits.push("• No hard cuts, no text, no on-screen characters, no camera shake.");
+  return bits.join("\n");
+}
+
 
 function RunAgentWizard({
   agent,
@@ -288,7 +304,9 @@ function RunAgentWizard({
 
   // Image guideline (skill) — auto-drafted from theme, editable
   const [imageGuideline, setImageGuideline] = useState<string>("");
+  const [videoGuideline, setVideoGuideline] = useState<string>("");
   const [guidelineTouched, setGuidelineTouched] = useState(false);
+  const [videoGuidelineTouched, setVideoGuidelineTouched] = useState(false);
 
   // Recurring theme (daily/weekly)
   const [themeSource, setThemeSource] = useState<"manual" | "channel">("channel");
@@ -359,12 +377,12 @@ function RunAgentWizard({
     }, 900);
   };
 
-  // Auto-draft the image guideline whenever the effective theme changes,
-  // unless the user has already edited it manually.
+  // Auto-draft guidelines whenever the effective theme changes,
+  // unless the user has already edited them manually.
   useEffect(() => {
-    if (guidelineTouched) return;
-    setImageGuideline(draftImageGuideline(effectiveTheme));
-  }, [effectiveTheme, guidelineTouched]);
+    if (!guidelineTouched) setImageGuideline(draftImageGuideline(effectiveTheme));
+    if (!videoGuidelineTouched) setVideoGuideline(draftVideoGuideline(effectiveTheme));
+  }, [effectiveTheme, guidelineTouched, videoGuidelineTouched]);
 
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
@@ -717,7 +735,13 @@ function RunAgentWizard({
                 </div>
               </Field>
 
-              <Field label="Image style guideline (AI skill)">
+              <Field
+                label={
+                  outputMode === "gorsel"
+                    ? "Image style guideline (AI skill)"
+                    : "Image (thumbnail) style guideline (AI skill)"
+                }
+              >
                 <div className="flex items-center gap-2 mb-1.5">
                   <button
                     type="button"
@@ -745,10 +769,43 @@ function RunAgentWizard({
                 />
                 <div className="text-[11px] text-text-tertiary mt-1.5">
                   {outputMode === "gorsel"
-                    ? "This guideline is applied to every generated image. The same image is used as the thumbnail AND as the static background behind the audio."
-                    : "This guideline is applied to the thumbnail image only. The looping background video is generated separately from the same theme."}
+                    ? "Applied to every generated image. The same image is used as the thumbnail AND as the static background behind the audio."
+                    : "Applied only to the thumbnail image. The looping background video uses its own skill below."}
                 </div>
               </Field>
+
+              {outputMode === "gorsel-video" && (
+                <Field label="Video (background loop) style guideline (AI skill)">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVideoGuideline(draftVideoGuideline(effectiveTheme));
+                        setVideoGuidelineTouched(false);
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Regenerate from theme
+                    </button>
+                    {videoGuidelineTouched && (
+                      <span className="text-[10px] text-text-tertiary">edited manually</span>
+                    )}
+                  </div>
+                  <textarea
+                    rows={7}
+                    value={videoGuideline}
+                    onChange={(e) => {
+                      setVideoGuideline(e.target.value);
+                      setVideoGuidelineTouched(true);
+                    }}
+                    className="w-full rounded-md bg-raised border border-subtle p-2.5 text-[12px] leading-relaxed resize-none"
+                  />
+                  <div className="text-[11px] text-text-tertiary mt-1.5">
+                    Applied to the looping background video only. Keep the same world & palette as the thumbnail — this describes motion, not composition.
+                  </div>
+                </Field>
+              )}
 
               <div className="text-[11px] text-text-tertiary rounded-md bg-raised/60 border border-subtle p-2.5">
                 Renders through YT Music Combiner with Fade In on the first clip.
@@ -940,7 +997,14 @@ function RunAgentWizard({
                       label="Media"
                       value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only (same image as thumbnail + background)" : "Image + video (image = thumbnail, video loops as background)"}`}
                     />
-                    <ReviewRow label="Image guideline" value={imageGuideline} multiline />
+                    <ReviewRow
+                      label={outputMode === "gorsel" ? "Image skill" : "Thumbnail skill"}
+                      value={imageGuideline}
+                      multiline
+                    />
+                    {outputMode === "gorsel-video" && (
+                      <ReviewRow label="Video skill" value={videoGuideline} multiline />
+                    )}
                     <ReviewRow
                       label="Publish"
                       value={autoUpload ? `Auto-upload · ${visibility}` : "Manual upload"}
