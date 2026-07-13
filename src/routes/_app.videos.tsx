@@ -196,9 +196,10 @@ function VideosPage() {
                   </span>
                 </div>
                 <div className="text-[12px] text-text-secondary font-mono">
-                  {new Date(v.createdAt).toLocaleDateString([], {
+                  {new Date(v.createdAt).toLocaleDateString("en-US", {
                     day: "2-digit",
                     month: "short",
+                    timeZone: "UTC",
                   })}
                 </div>
                 <div className="flex items-center justify-end gap-1">
