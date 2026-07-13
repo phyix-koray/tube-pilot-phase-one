@@ -518,13 +518,13 @@ function RunAgentWizard({
           ) : stepKey === "content" && isMusic ? (
             <div className="space-y-4">
               <div className="text-[12px] text-text-tertiary">
-                One-shot run — set the exact theme and Suno keywords for this single video.
+                One-shot run — the AI has suggested a keyword set for Suno based on your channel's mood.
               </div>
-              <Field label="AI-suggested theme">
+              <Field label="AI-Suggested Keyword Set">
                 <div className="flex items-center gap-2 mb-1.5">
                   <button
                     type="button"
-                    onClick={() => setTheme(SUGGESTED_THEME)}
+                    onClick={() => setTags(SUGGESTED_TAGS)}
                     className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary"
                   >
                     <Sparkles className="w-3 h-3" />
@@ -533,18 +533,13 @@ function RunAgentWizard({
                 </div>
                 <textarea
                   rows={4}
-                  value={theme}
-                  onChange={(e) => setTheme(e.target.value)}
-                  className="w-full rounded-md bg-raised border border-subtle p-2.5 text-[13px] resize-none"
-                />
-              </Field>
-              <Field label="First Suno keyword set">
-                <textarea
-                  rows={2}
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   className="w-full rounded-md bg-raised border border-subtle p-2.5 text-[12px] font-mono resize-none"
                 />
+                <div className="text-[11px] text-text-tertiary mt-1.5">
+                  Passed straight to Suno as the tag string for every generated song.
+                </div>
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Songs per run">
@@ -984,8 +979,11 @@ function RunAgentWizard({
                       }
                     />
                     <ReviewRow label="Timezone" value={tzLabel(tz)} />
-                    <ReviewRow label="Theme" value={effectiveTheme} multiline />
-                    {!isRecurring && <ReviewRow label="Tags" value={tags} multiline />}
+                    {isRecurring ? (
+                      <ReviewRow label="Theme" value={effectiveTheme} multiline />
+                    ) : (
+                      <ReviewRow label="Keywords" value={tags} multiline />
+                    )}
                     <ReviewRow label="Video length" value={lengthLabel} />
                     {!isRecurring && (
                       <ReviewRow

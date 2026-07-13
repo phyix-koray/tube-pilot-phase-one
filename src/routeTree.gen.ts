@@ -17,6 +17,7 @@ import { Route as AppSkillsRouteImport } from './routes/_app.skills'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppChannelsRouteImport } from './routes/_app.channels'
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
+import { Route as AppVideosVideoIdRouteImport } from './routes/_app.videos.$videoId'
 import { Route as AppSkillsSkillIdRouteImport } from './routes/_app.skills.$skillId'
 import { Route as AppAgentsAgentIdRouteImport } from './routes/_app.agents.$agentId'
 
@@ -59,6 +60,11 @@ const AppAgentsRoute = AppAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AppRoute,
 } as any)
+const AppVideosVideoIdRoute = AppVideosVideoIdRouteImport.update({
+  id: '/$videoId',
+  path: '/$videoId',
+  getParentRoute: () => AppVideosRoute,
+} as any)
 const AppSkillsSkillIdRoute = AppSkillsSkillIdRouteImport.update({
   id: '/$skillId',
   path: '/$skillId',
@@ -76,10 +82,11 @@ export interface FileRoutesByFullPath {
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
   '/skills': typeof AppSkillsRouteWithChildren
-  '/videos': typeof AppVideosRoute
+  '/videos': typeof AppVideosRouteWithChildren
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
+  '/videos/$videoId': typeof AppVideosVideoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -87,10 +94,11 @@ export interface FileRoutesByTo {
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
   '/skills': typeof AppSkillsRouteWithChildren
-  '/videos': typeof AppVideosRoute
+  '/videos': typeof AppVideosRouteWithChildren
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
+  '/videos/$videoId': typeof AppVideosVideoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,10 +108,11 @@ export interface FileRoutesById {
   '/_app/channels': typeof AppChannelsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/skills': typeof AppSkillsRouteWithChildren
-  '/_app/videos': typeof AppVideosRoute
+  '/_app/videos': typeof AppVideosRouteWithChildren
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/_app/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/_app/skills/$skillId': typeof AppSkillsSkillIdRoute
+  '/_app/videos/$videoId': typeof AppVideosVideoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/editor/$videoId'
     | '/agents/$agentId'
     | '/skills/$skillId'
+    | '/videos/$videoId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/editor/$videoId'
     | '/agents/$agentId'
     | '/skills/$skillId'
+    | '/videos/$videoId'
   id:
     | '__root__'
     | '/'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/editor/$videoId'
     | '/_app/agents/$agentId'
     | '/_app/skills/$skillId'
+    | '/_app/videos/$videoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,6 +218,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAgentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/videos/$videoId': {
+      id: '/_app/videos/$videoId'
+      path: '/$videoId'
+      fullPath: '/videos/$videoId'
+      preLoaderRoute: typeof AppVideosVideoIdRouteImport
+      parentRoute: typeof AppVideosRoute
+    }
     '/_app/skills/$skillId': {
       id: '/_app/skills/$skillId'
       path: '/$skillId'
@@ -247,12 +266,24 @@ const AppSkillsRouteWithChildren = AppSkillsRoute._addFileChildren(
   AppSkillsRouteChildren,
 )
 
+interface AppVideosRouteChildren {
+  AppVideosVideoIdRoute: typeof AppVideosVideoIdRoute
+}
+
+const AppVideosRouteChildren: AppVideosRouteChildren = {
+  AppVideosVideoIdRoute: AppVideosVideoIdRoute,
+}
+
+const AppVideosRouteWithChildren = AppVideosRoute._addFileChildren(
+  AppVideosRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppChannelsRoute: typeof AppChannelsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSkillsRoute: typeof AppSkillsRouteWithChildren
-  AppVideosRoute: typeof AppVideosRoute
+  AppVideosRoute: typeof AppVideosRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -260,7 +291,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChannelsRoute: AppChannelsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSkillsRoute: AppSkillsRouteWithChildren,
-  AppVideosRoute: AppVideosRoute,
+  AppVideosRoute: AppVideosRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
