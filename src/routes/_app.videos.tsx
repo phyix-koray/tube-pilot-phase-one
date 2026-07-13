@@ -115,10 +115,11 @@ function VideosPage() {
           value={workflow}
           onChange={setWorkflow}
           options={[
-            ["all", "All workflows"],
+            ["all", "All agents"],
             ...mockWorkflows.map((w) => [w.id, w.name] as [string, string]),
           ]}
         />
+
         <FilterSelect
           value={status}
           onChange={(v) => setStatus(v as VideoStatus | "all")}
