@@ -704,18 +704,52 @@ function RunAgentWizard({
                     active={outputMode === "gorsel"}
                     accent={accent}
                     title="Image only"
-                    subtitle="Static thumbnail behind the audio"
+                    subtitle="Same image as thumbnail + static background"
                     onClick={() => setOutputMode("gorsel")}
                   />
                   <ChoiceOption
                     active={outputMode === "gorsel-video"}
                     accent={accent}
                     title="Image + video"
-                    subtitle="Ambient motion background"
+                    subtitle="Image = thumbnail, video loops as background"
                     onClick={() => setOutputMode("gorsel-video")}
                   />
                 </div>
               </Field>
+
+              <Field label="Image style guideline (AI skill)">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageGuideline(draftImageGuideline(effectiveTheme));
+                      setGuidelineTouched(false);
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Regenerate from theme
+                  </button>
+                  {guidelineTouched && (
+                    <span className="text-[10px] text-text-tertiary">edited manually</span>
+                  )}
+                </div>
+                <textarea
+                  rows={7}
+                  value={imageGuideline}
+                  onChange={(e) => {
+                    setImageGuideline(e.target.value);
+                    setGuidelineTouched(true);
+                  }}
+                  className="w-full rounded-md bg-raised border border-subtle p-2.5 text-[12px] leading-relaxed resize-none"
+                />
+                <div className="text-[11px] text-text-tertiary mt-1.5">
+                  {outputMode === "gorsel"
+                    ? "This guideline is applied to every generated image. The same image is used as the thumbnail AND as the static background behind the audio."
+                    : "This guideline is applied to the thumbnail image only. The looping background video is generated separately from the same theme."}
+                </div>
+              </Field>
+
               <div className="text-[11px] text-text-tertiary rounded-md bg-raised/60 border border-subtle p-2.5">
                 Renders through YT Music Combiner with Fade In on the first clip.
               </div>
