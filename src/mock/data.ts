@@ -1,9 +1,7 @@
-export type WorkflowCategory =
-  | "music"
-  | "documentary"
-  | "education"
-  | "sports"
-  | "custom";
+import musicAvatar from "@/assets/music-agent.png.asset.json";
+import aiAvatar from "@/assets/ai-agent.png.asset.json";
+import stockAvatar from "@/assets/stock-agent.png.asset.json";
+
 export type WorkflowStatus = "idle" | "running" | "scheduled" | "error";
 export type VideoStatus =
   | "published"
@@ -23,8 +21,11 @@ export interface WorkflowStep {
 export interface Workflow {
   id: string;
   name: string;
-  category: WorkflowCategory;
-  icon: string; // lucide name
+  /** kept for legacy code paths; not shown in UI anymore */
+  category: string;
+  icon: string; // lucide name (fallback if no avatar)
+  avatar?: string; // CDN url for agent portrait
+  accent?: string; // subtle background tint for card hero
   description: string;
   steps: WorkflowStep[];
   status: WorkflowStatus;
