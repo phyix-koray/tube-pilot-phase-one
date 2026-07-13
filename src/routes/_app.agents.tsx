@@ -64,7 +64,7 @@ function AgentsPage() {
               className="h-9 w-64 rounded-lg bg-surface border border-subtle pl-8 pr-3 text-[13px] placeholder:text-text-tertiary"
             />
           </div>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-text-primary text-base hover:opacity-90 px-3.5 h-9 text-[13px] font-medium">
+          <button className="inline-flex items-center gap-1.5 rounded-lg bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3.5 h-9 text-[13px] font-medium">
             <Plus className="w-4 h-4" />
             New
           </button>
@@ -122,7 +122,7 @@ function AgentCard({ w }: { w: Workflow }) {
       </p>
 
       <div className="mt-5 border-t border-subtle bg-raised/40 flex items-center justify-between px-3 py-2">
-        <button className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-base hover:opacity-90 px-3 h-8 text-[13px] font-medium">
+        <button className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium">
           <Play className="w-3.5 h-3.5" />
           Use agent
         </button>
