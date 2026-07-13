@@ -86,18 +86,20 @@ function AgentsPage() {
 }
 
 function AgentCard({ w }: { w: Workflow }) {
+  const accent = w.accent ?? "var(--tp-subtle)";
   return (
     <div
       className={cn(
-        "group rounded-xl bg-surface border border-subtle overflow-hidden card-shadow transition-transform hover:-translate-y-0.5",
+        "group rounded-xl bg-surface overflow-hidden card-shadow transition-transform hover:-translate-y-0.5",
         statusLeftBorder(w.status),
       )}
+      style={{ border: `2px solid ${accent}` }}
     >
       {/* Hero row: avatar + name */}
       <div className="flex items-center gap-3 px-5 pt-5">
         <div
           className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
-          style={{ backgroundColor: w.accent ?? "var(--tp-raised)" }}
+          style={{ backgroundColor: accent }}
         >
           {w.avatar ? (
             <img
