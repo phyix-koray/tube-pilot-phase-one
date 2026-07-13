@@ -358,7 +358,7 @@ function RunAgentWizard({
         {/* Stepper */}
         {!done && (
           <div className="px-5 mt-5">
-            <StepBar steps={RUN_STEPS} current={step} accent={accent} onJump={setStep} />
+            <StepBar steps={RUN_STEPS} current={clampedStep} accent={accent} onJump={setStep} />
           </div>
         )}
 
