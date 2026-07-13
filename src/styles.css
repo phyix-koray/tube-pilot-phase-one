@@ -2,11 +2,11 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * TubePilot — Apple-inspired dark UI design system.
- * All tokens live here; components consume via Tailwind utilities.
+ * TubePilot — Light-first design system with dark toggle.
+ * Tokens live under :root (light) and .dark (dark override).
  */
 
 @theme inline {
@@ -23,7 +23,7 @@
     "JetBrains Mono", "SF Mono", ui-monospace, "Cascadia Mono", Menlo,
     Consolas, monospace;
 
-  /* TubePilot palette */
+  /* TubePilot palette (theme-agnostic references) */
   --color-base: var(--tp-base);
   --color-surface: var(--tp-surface);
   --color-raised: var(--tp-raised);
@@ -38,7 +38,7 @@
   --color-text-secondary: var(--tp-text-secondary);
   --color-text-tertiary: var(--tp-text-tertiary);
 
-  /* shadcn compatibility mapping (dark-only) */
+  /* shadcn compatibility mapping */
   --color-background: var(--tp-base);
   --color-foreground: var(--tp-text-primary);
   --color-card: var(--tp-surface);
@@ -69,7 +69,26 @@
   --color-sidebar-ring: var(--tp-blue);
 }
 
+/* Light theme (default) */
 :root {
+  --tp-base: #ffffff;
+  --tp-surface: #fafafa;
+  --tp-raised: #f2f2f4;
+  --tp-hover: #ececef;
+  --tp-subtle: #e4e4e7;
+  --tp-blue: #0a84ff;
+  --tp-green: #22c55e;
+  --tp-amber: #eab308;
+  --tp-red: #ef4444;
+  --tp-orange: #f97316;
+  --tp-text-primary: #0a0a0b;
+  --tp-text-secondary: #6b6b70;
+  --tp-text-tertiary: #a1a1a6;
+  --radius: 12px;
+}
+
+/* Dark theme */
+.dark {
   --tp-base: #0a0a0b;
   --tp-surface: #111113;
   --tp-raised: #1c1c1f;
@@ -82,8 +101,7 @@
   --tp-orange: #ff9f0a;
   --tp-text-primary: #f5f5f7;
   --tp-text-secondary: #8e8e93;
-  --tp-text-tertiary: #48484a;
-  --radius: 12px;
+  --tp-text-tertiary: #6b6b70;
 }
 
 @layer base {
@@ -97,6 +115,11 @@
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
     color-scheme: dark;
   }
   ::selection {
@@ -106,6 +129,12 @@
 }
 
 @utility card-shadow {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--tp-text-primary) 5%, transparent),
+    0 4px 20px color-mix(in oklab, var(--tp-text-primary) 6%, transparent);
+}
+
+.dark .card-shadow {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.06),
     0 4px 24px rgba(0, 0, 0, 0.4);
@@ -161,6 +190,6 @@
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3d;
+  background: color-mix(in oklab, var(--tp-text-tertiary) 60%, transparent);
   background-clip: content-box;
 }

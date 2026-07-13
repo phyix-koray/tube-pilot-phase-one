@@ -1,9 +1,7 @@
-export type WorkflowCategory =
-  | "music"
-  | "documentary"
-  | "education"
-  | "sports"
-  | "custom";
+import musicAvatar from "@/assets/music-agent.png.asset.json";
+import aiAvatar from "@/assets/ai-agent.png.asset.json";
+import stockAvatar from "@/assets/stock-agent.png.asset.json";
+
 export type WorkflowStatus = "idle" | "running" | "scheduled" | "error";
 export type VideoStatus =
   | "published"
@@ -23,8 +21,11 @@ export interface WorkflowStep {
 export interface Workflow {
   id: string;
   name: string;
-  category: WorkflowCategory;
-  icon: string; // lucide name
+  /** kept for legacy code paths; not shown in UI anymore */
+  category: string;
+  icon: string; // lucide name (fallback if no avatar)
+  avatar?: string; // CDN url for agent portrait
+  accent?: string; // subtle background tint for card hero
   description: string;
   steps: WorkflowStep[];
   status: WorkflowStatus;
@@ -85,7 +86,7 @@ export const mockChannels: Channel[] = [
     subscribers: 1,
     niche: "slow jazz, ambient music, world lounge",
     connectedAt: "2026-07-07",
-    usedIn: "Music Channel — Suno Jazz",
+    usedIn: "Music Composer Agent",
     color: "#0A84FF",
   },
   {
@@ -104,7 +105,7 @@ export const mockChannels: Channel[] = [
     subscribers: 1,
     niche: "history, geopolitics, sports recap",
     connectedAt: "2026-07-07",
-    usedIn: "Documentary Hybrid",
+    usedIn: "AI Video Generator Agent",
     color: "#FFD60A",
   },
 ];
@@ -236,47 +237,44 @@ const documentarySteps: WorkflowStep[] = [
 
 export const mockWorkflows: Workflow[] = [
   {
-    id: "music-channel",
-    name: "Music Channel — Suno Jazz",
+    id: "music-composer",
+    name: "Music Composer Agent",
     category: "music",
     icon: "Music",
+    avatar: musicAvatar.url,
+    accent: "#f7b6d2",
     description:
-      "Generate slow smooth jazz videos daily with AI themes, Suno song production, and YouTube auto-publishing.",
+      "Composes original ambient and jazz tracks, generates thematic thumbnails, and publishes to your music channel on autopilot.",
     steps: musicSteps,
     status: "scheduled",
     lastRun: "2 hours ago",
     nextRun: "Today 14:30",
   },
   {
-    id: "documentary-hybrid",
-    name: "Documentary — Hybrid Scenes",
-    category: "documentary",
-    icon: "Film",
+    id: "ai-video-generator",
+    name: "AI Video Generator Agent",
+    category: "ai",
+    icon: "Sparkles",
+    avatar: aiAvatar.url,
+    accent: "#c6f24a",
     description:
-      "Find viral topics, research deeply, generate scene-by-scene scripts and imagery through Scene Studio.",
+      "End-to-end AI video pipeline: writes the script, generates every scene with image and motion models, then renders and publishes.",
     steps: documentarySteps,
     status: "idle",
     lastRun: "Yesterday",
   },
   {
-    id: "history-shorts",
-    name: "History Shorts",
-    category: "education",
-    icon: "BookOpen",
+    id: "stock-video-generator",
+    name: "Stock Video Generator Agent",
+    category: "stock",
+    icon: "Film",
+    avatar: stockAvatar.url,
+    accent: "#facc15",
     description:
-      "Daily historical events turned into engaging short-form videos with AI narration and stock imagery.",
-    steps: musicSteps.slice(0, 6),
+      "Finds trending topics, researches deeply, and builds documentary videos using curated stock footage and AI narration.",
+    steps: documentarySteps,
     status: "idle",
-  },
-  {
-    id: "sports-recap",
-    name: "Sports Recap",
-    category: "sports",
-    icon: "Trophy",
-    description:
-      "Post-match analysis videos auto-generated from live score feeds and match data.",
-    steps: musicSteps.slice(0, 5),
-    status: "idle",
+    lastRun: "3 days ago",
   },
 ];
 
@@ -289,7 +287,7 @@ export const mockVideos: Video[] = [
     id: "v1",
     title: "Cape Town Harbor Jazz – Misty Morning Saxophone",
     channelId: "ch1",
-    workflowId: "music-channel",
+    workflowId: "music-composer",
     status: "published",
     views: 47,
     publishedAt: "2026-07-04T09:12:00Z",
@@ -300,7 +298,7 @@ export const mockVideos: Video[] = [
     id: "v2",
     title: "Kyoto Tea House Rain – Late Afternoon Saxophone",
     channelId: "ch1",
-    workflowId: "music-channel",
+    workflowId: "music-composer",
     status: "pending_review",
     reviewDeadline: hoursFromNow(18.7),
     createdAt: "2026-07-04T12:39:00Z",
@@ -310,7 +308,7 @@ export const mockVideos: Video[] = [
     id: "v3",
     title: "Prague Cellar Jazz – Midnight Cobblestone",
     channelId: "ch1",
-    workflowId: "music-channel",
+    workflowId: "music-composer",
     status: "pending_review",
     reviewDeadline: hoursFromNow(0.6),
     createdAt: "2026-07-03T22:00:00Z",
@@ -320,7 +318,7 @@ export const mockVideos: Video[] = [
     id: "v4",
     title: "Japan vs Brazil – Round of 16",
     channelId: "ch3",
-    workflowId: "documentary-hybrid",
+    workflowId: "ai-video-generator",
     status: "published",
     views: 312,
     publishedAt: "2026-07-01T14:00:00Z",
@@ -331,7 +329,7 @@ export const mockVideos: Video[] = [
     id: "v5",
     title: "The Dam That Never Cracked",
     channelId: "ch3",
-    workflowId: "documentary-hybrid",
+    workflowId: "ai-video-generator",
     status: "draft",
     createdAt: "2026-07-02T10:00:00Z",
     thumbnail: "https://picsum.photos/seed/tubepilot5/640/360",
@@ -340,7 +338,7 @@ export const mockVideos: Video[] = [
     id: "v6",
     title: "Marrakech Rooftop Dusk – Jazz at Sunset",
     channelId: "ch1",
-    workflowId: "music-channel",
+    workflowId: "music-composer",
     status: "failed",
     error: "YT Music Combiner timeout",
     createdAt: "2026-07-03T15:00:00Z",
@@ -355,7 +353,7 @@ export const mockSkills: Skill[] = [
     category: "Documentary",
     description:
       "Guides the AI to write documentary-style scene transcripts with emotional hooks, pacing notes, and visual directions.",
-    usedIn: "Documentary Hybrid (Step 4)",
+    usedIn: "AI Video Generator Agent (Step 4)",
     lastEdited: "3 days ago",
     instructions: `You are an expert documentary scriptwriter. Write for a 3-minute video split into 12–18 scenes.
 
@@ -374,7 +372,7 @@ Open with a hook. Layer stakes, then a turn, then a resolution. Never use filler
     category: "Music",
     description:
       "Directs GPT Image to create luxury interior panoramic thumbnails matching the day's theme.",
-    usedIn: "Music Channel (Step 4)",
+    usedIn: "Music Composer (Step 4)",
     lastEdited: "1 week ago",
     instructions: `Photorealistic 16:9 luxury interior with a panoramic city or nature view.
 Cinematic warm light, film grain, no visible text or people.`,
@@ -385,7 +383,7 @@ Cinematic warm light, film grain, no visible text or people.`,
     category: "Music",
     description:
       "Writes SEO-friendly titles, descriptions, and tags for ambient jazz music videos.",
-    usedIn: "Music Channel (Step 6)",
+    usedIn: "Music Composer (Step 6)",
     lastEdited: "2 days ago",
     instructions: `Title: ≤100 chars, evocative location + mood + instrument.
 Description: 3 short paragraphs, timestamps, channel CTA.
@@ -397,7 +395,7 @@ Tags: 15–25 comma-separated, ≤500 chars total.`,
     category: "Music",
     description:
       "Produces varied Suno keyword sets so consecutive songs feel distinct within the same theme.",
-    usedIn: "Music Channel (Step 2)",
+    usedIn: "Music Composer (Step 2)",
     lastEdited: "5 days ago",
     instructions: `Given a theme, output 10 keyword bundles. Each bundle: 4–6 tags across mood, tempo, instrument, era.`,
   },
@@ -407,7 +405,7 @@ Tags: 15–25 comma-separated, ≤500 chars total.`,
     category: "Education",
     description:
       "Turns raw topic ideas into multi-source structured research briefs.",
-    usedIn: "History Shorts (Step 3)",
+    usedIn: "AI Video Generator (Step 3)",
     lastEdited: "2 weeks ago",
     instructions: `Return a brief with: hook, key facts (with dates), tension, resolution, and 3 primary sources.`,
   },
@@ -417,7 +415,7 @@ Tags: 15–25 comma-separated, ≤500 chars total.`,
     category: "Education",
     description:
       "Cold-opens that keep the audience watching past the first 3 seconds.",
-    usedIn: "History Shorts (Step 4)",
+    usedIn: "AI Video Generator (Step 4)",
     lastEdited: "1 month ago",
     instructions: `Write 5 first-line hooks under 12 words each. Prefer concrete nouns and a single surprising number.`,
   },
@@ -576,19 +574,8 @@ export const mockScenes: Scene[] = [
 export const totalDurationSeconds = () =>
   mockScenes.reduce((a, s) => a + s.duration, 0);
 
-export function categoryClass(cat: WorkflowCategory) {
-  switch (cat) {
-    case "music":
-      return "bg-[rgba(10,132,255,0.12)] text-[#0A84FF]";
-    case "documentary":
-      return "bg-[rgba(255,214,10,0.12)] text-[#FFD60A]";
-    case "education":
-      return "bg-[rgba(48,209,88,0.12)] text-[#30D158]";
-    case "sports":
-      return "bg-[rgba(255,69,58,0.12)] text-[#FF453A]";
-    default:
-      return "bg-[rgba(142,142,147,0.12)] text-[#8E8E93]";
-  }
+export function categoryClass(_cat: string) {
+  return "bg-raised text-text-secondary";
 }
 
 export function statusLeftBorder(status: WorkflowStatus) {
