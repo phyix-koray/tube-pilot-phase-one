@@ -304,7 +304,9 @@ function RunAgentWizard({
 
   // Image guideline (skill) — auto-drafted from theme, editable
   const [imageGuideline, setImageGuideline] = useState<string>("");
+  const [videoGuideline, setVideoGuideline] = useState<string>("");
   const [guidelineTouched, setGuidelineTouched] = useState(false);
+  const [videoGuidelineTouched, setVideoGuidelineTouched] = useState(false);
 
   // Recurring theme (daily/weekly)
   const [themeSource, setThemeSource] = useState<"manual" | "channel">("channel");
