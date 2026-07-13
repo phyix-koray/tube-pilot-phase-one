@@ -237,47 +237,44 @@ const documentarySteps: WorkflowStep[] = [
 
 export const mockWorkflows: Workflow[] = [
   {
-    id: "music-channel",
-    name: "Music Channel — Suno Jazz",
+    id: "music-composer",
+    name: "Music Composer Agent",
     category: "music",
     icon: "Music",
+    avatar: musicAvatar.url,
+    accent: "#f7b6d2",
     description:
-      "Generate slow smooth jazz videos daily with AI themes, Suno song production, and YouTube auto-publishing.",
+      "Composes original ambient and jazz tracks, generates thematic thumbnails, and publishes to your music channel on autopilot.",
     steps: musicSteps,
     status: "scheduled",
     lastRun: "2 hours ago",
     nextRun: "Today 14:30",
   },
   {
-    id: "documentary-hybrid",
-    name: "Documentary — Hybrid Scenes",
-    category: "documentary",
-    icon: "Film",
+    id: "ai-video-generator",
+    name: "AI Video Generator Agent",
+    category: "ai",
+    icon: "Sparkles",
+    avatar: aiAvatar.url,
+    accent: "#c6f24a",
     description:
-      "Find viral topics, research deeply, generate scene-by-scene scripts and imagery through Scene Studio.",
+      "End-to-end AI video pipeline: writes the script, generates every scene with image and motion models, then renders and publishes.",
     steps: documentarySteps,
     status: "idle",
     lastRun: "Yesterday",
   },
   {
-    id: "history-shorts",
-    name: "History Shorts",
-    category: "education",
-    icon: "BookOpen",
+    id: "stock-video-generator",
+    name: "Stock Video Generator Agent",
+    category: "stock",
+    icon: "Film",
+    avatar: stockAvatar.url,
+    accent: "#facc15",
     description:
-      "Daily historical events turned into engaging short-form videos with AI narration and stock imagery.",
-    steps: musicSteps.slice(0, 6),
+      "Finds trending topics, researches deeply, and builds documentary videos using curated stock footage and AI narration.",
+    steps: documentarySteps,
     status: "idle",
-  },
-  {
-    id: "sports-recap",
-    name: "Sports Recap",
-    category: "sports",
-    icon: "Trophy",
-    description:
-      "Post-match analysis videos auto-generated from live score feeds and match data.",
-    steps: musicSteps.slice(0, 5),
-    status: "idle",
+    lastRun: "3 days ago",
   },
 ];
 
