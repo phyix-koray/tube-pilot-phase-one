@@ -275,7 +275,7 @@ function RunAgentWizard({
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
       />
       <div
-        className="relative w-full max-w-xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-2xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
         style={{ border: `2px solid ${accent}` }}
       >
         <button
