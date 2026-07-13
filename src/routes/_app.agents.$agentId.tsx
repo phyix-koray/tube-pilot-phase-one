@@ -41,7 +41,7 @@ function WorkflowDetail() {
       {/* Breadcrumb */}
       <div className="text-[13px] text-text-secondary flex items-center gap-1">
         <Link to="/agents" className="hover:text-text-primary">
-          Library
+          Agents
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
         <span className="text-text-primary">{workflow.name}</span>
