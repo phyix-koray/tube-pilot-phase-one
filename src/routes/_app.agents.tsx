@@ -979,8 +979,11 @@ function RunAgentWizard({
                       }
                     />
                     <ReviewRow label="Timezone" value={tzLabel(tz)} />
-                    <ReviewRow label="Theme" value={effectiveTheme} multiline />
-                    {!isRecurring && <ReviewRow label="Tags" value={tags} multiline />}
+                    {isRecurring ? (
+                      <ReviewRow label="Theme" value={effectiveTheme} multiline />
+                    ) : (
+                      <ReviewRow label="Keywords" value={tags} multiline />
+                    )}
                     <ReviewRow label="Video length" value={lengthLabel} />
                     {!isRecurring && (
                       <ReviewRow
