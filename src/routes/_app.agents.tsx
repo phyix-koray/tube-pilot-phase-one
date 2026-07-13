@@ -1,13 +1,24 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronRight, Play, Plus, Search, X, CheckCircle2 } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronLeft,
+  Play,
+  Plus,
+  Search,
+  X,
+  CheckCircle2,
+  Settings2,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
+  mockChannels,
   mockVideos,
   mockWorkflows,
   statusLeftBorder,
   type Workflow,
 } from "@/mock/data";
 import { cn } from "@/lib/tp";
+import { StepBar, type Step } from "@/components/StepFlow";
 
 export const Route = createFileRoute("/_app/agents")({
   head: () => ({
@@ -40,7 +51,7 @@ function AgentsPage() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3200);
+    const t = setTimeout(() => setToast(null), 3600);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -91,11 +102,11 @@ function AgentsPage() {
       </div>
 
       {runTarget && (
-        <RunAgentModal
+        <RunAgentWizard
           agent={runTarget}
           onClose={() => setRunTarget(null)}
-          onConfirm={() => {
-            setToast(`${runTarget.name} started. New video will appear in Videos when ready.`);
+          onDone={(msg) => {
+            setToast(msg);
             setRunTarget(null);
           }}
         />
@@ -121,18 +132,13 @@ function AgentCard({ w, onUse }: { w: Workflow; onUse: () => void }) {
       )}
       style={{ border: `2px solid ${accent}` }}
     >
-      {/* Hero row: avatar + name */}
       <div className="flex items-center gap-3 px-5 pt-5">
         <div
           className="w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
           style={{ backgroundColor: accent }}
         >
           {w.avatar ? (
-            <img
-              src={w.avatar}
-              alt=""
-              className="w-full h-full object-cover"
-            />
+            <img src={w.avatar} alt="" className="w-full h-full object-cover" />
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
@@ -162,6 +168,7 @@ function AgentCard({ w, onUse }: { w: Workflow; onUse: () => void }) {
           params={{ agentId: w.id }}
           className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary px-2 h-8"
         >
+          <Settings2 className="w-3.5 h-3.5" />
           Configure <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
@@ -169,17 +176,64 @@ function AgentCard({ w, onUse }: { w: Workflow; onUse: () => void }) {
   );
 }
 
-function RunAgentModal({
+/* ============================================================
+ * Run Agent — step-by-step wizard modal
+ * ============================================================ */
+
+const RUN_STEPS: Step[] = [
+  { key: "channel", title: "Channel" },
+  { key: "inputs", title: "Inputs" },
+  { key: "schedule", title: "Schedule" },
+  { key: "review", title: "Review" },
+];
+
+function RunAgentWizard({
   agent,
   onClose,
-  onConfirm,
+  onDone,
 }: {
   agent: Workflow;
   onClose: () => void;
-  onConfirm: () => void;
+  onDone: (message: string) => void;
 }) {
   const navigate = useNavigate();
   const accent = agent.accent ?? "var(--tp-subtle)";
+
+  const suggestedChannel =
+    mockChannels.find((c) => c.usedIn?.includes(agent.name)) ?? mockChannels[0];
+
+  const [step, setStep] = useState(0);
+  const [channelId, setChannelId] = useState(suggestedChannel.id);
+  const [prompt, setPrompt] = useState(
+    agent.id === "music-composer"
+      ? "slow smooth jazz, saxophone, cozy ambient lounge"
+      : agent.id === "ai-video-generator"
+        ? "The Dam That Never Cracked — a 3-minute short doc about the Houston dam."
+        : "Top 5 underrated moments of the last World Cup.",
+  );
+  const [when, setWhen] = useState<"now" | "later">("now");
+  const [scheduleAt, setScheduleAt] = useState("14:30");
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const channel = mockChannels.find((c) => c.id === channelId)!;
+  const canNext =
+    (step === 0 && !!channelId) ||
+    (step === 1 && prompt.trim().length > 0) ||
+    step === 2 ||
+    step === 3;
+
+  const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
+  const prev = () => setStep((s) => Math.max(s - 1, 0));
+
+  const start = () => {
+    setRunning(true);
+    setTimeout(() => {
+      setRunning(false);
+      setDone(true);
+    }, 900);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <button
@@ -188,7 +242,7 @@ function RunAgentModal({
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
       />
       <div
-        className="relative w-full max-w-md rounded-2xl bg-surface card-shadow overflow-hidden"
+        className="relative w-full max-w-xl rounded-2xl bg-surface card-shadow overflow-hidden"
         style={{ border: `2px solid ${accent}` }}
       >
         <button
@@ -197,44 +251,298 @@ function RunAgentModal({
         >
           <X className="w-4 h-4" />
         </button>
+
+        {/* Header */}
         <div className="flex items-center gap-3 px-5 pt-5">
           <div
             className="w-11 h-11 rounded-full overflow-hidden shrink-0"
             style={{ backgroundColor: accent }}
           >
             {agent.avatar && (
-              <img src={agent.avatar} alt="" className="w-full h-full object-cover" />
+              <img
+                src={agent.avatar}
+                alt=""
+                className="w-full h-full object-cover"
+              />
             )}
           </div>
-          <div>
-            <div className="text-[15px] font-semibold">{agent.name}</div>
+          <div className="min-w-0">
+            <div className="text-[15px] font-semibold truncate">
+              Run {agent.name}
+            </div>
             <div className="text-[11px] text-text-tertiary">
-              {agent.steps.length} steps · runs on demand
+              {agent.steps.length}-step pipeline
             </div>
           </div>
         </div>
-        <p className="px-5 mt-3 text-[13px] text-text-secondary">
-          Run <span className="text-text-primary font-medium">{agent.name}</span>{" "}
-          once with the current configuration? The finished video will appear in{" "}
-          <span className="text-text-primary">Videos</span> for your review.
-        </p>
-        <div className="mt-5 border-t border-subtle bg-raised/40 flex items-center justify-between px-3 py-2">
-          <button
-            onClick={() =>
-              navigate({ to: "/agents/$agentId", params: { agentId: agent.id } })
-            }
-            className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary px-2 h-8"
-          >
-            Configure first <ChevronRight className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onConfirm}
-            className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium"
-          >
-            <Play className="w-3.5 h-3.5" />
-            Run now
-          </button>
+
+        {/* Stepper */}
+        {!done && (
+          <div className="px-5 mt-5">
+            <StepBar steps={RUN_STEPS} current={step} accent={accent} onJump={setStep} />
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="px-5 py-5 min-h-[220px]">
+          {done ? (
+            <div className="text-center py-6">
+              <div
+                className="w-14 h-14 rounded-full mx-auto flex items-center justify-center"
+                style={{ backgroundColor: accent }}
+              >
+                <CheckCircle2 className="w-7 h-7 text-black" />
+              </div>
+              <div className="mt-4 text-[16px] font-semibold">
+                {agent.name} started
+              </div>
+              <p className="text-[13px] text-text-secondary mt-1">
+                Your new video will appear in{" "}
+                <Link to="/videos" className="text-blue hover:underline">
+                  Videos
+                </Link>{" "}
+                as soon as it's ready for review.
+              </p>
+            </div>
+          ) : step === 0 ? (
+            <div className="space-y-3">
+              <div className="text-[13px] text-text-secondary">
+                Which channel should this run publish to?
+              </div>
+              <div className="space-y-2">
+                {mockChannels.map((c) => (
+                  <label
+                    key={c.id}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border p-3 cursor-pointer",
+                      channelId === c.id
+                        ? "border-transparent"
+                        : "border-subtle hover:bg-hover",
+                    )}
+                    style={
+                      channelId === c.id
+                        ? { border: `2px solid ${accent}` }
+                        : undefined
+                    }
+                  >
+                    <input
+                      type="radio"
+                      name="channel"
+                      checked={channelId === c.id}
+                      onChange={() => setChannelId(c.id)}
+                      className="sr-only"
+                    />
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-lg"
+                      style={{
+                        backgroundColor: c.color + "22",
+                        color: c.color,
+                      }}
+                    >
+                      {c.emoji}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-medium truncate">
+                        {c.name}
+                      </div>
+                      <div className="text-[11px] text-text-tertiary truncate">
+                        {c.niche || "No niche set"}
+                      </div>
+                    </div>
+                    {c.usedIn?.includes(agent.name) && (
+                      <span className="text-[10px] uppercase tracking-wide rounded-md bg-raised px-1.5 py-0.5 text-text-secondary">
+                        Suggested
+                      </span>
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : step === 1 ? (
+            <div className="space-y-3">
+              <div className="text-[13px] text-text-secondary">
+                {agent.id === "music-composer"
+                  ? "Describe the vibe for today's tracks."
+                  : "Give this run a topic or brief."}
+              </div>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={5}
+                className="w-full rounded-md bg-raised border border-subtle p-3 text-[13px] resize-none"
+              />
+              <div className="text-[11px] text-text-tertiary">
+                Tip: leave this as-is to reuse the saved defaults from Configure.
+              </div>
+            </div>
+          ) : step === 2 ? (
+            <div className="space-y-3">
+              <div className="text-[13px] text-text-secondary">
+                When should this run happen?
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <ScheduleOption
+                  active={when === "now"}
+                  accent={accent}
+                  title="Run now"
+                  subtitle="Starts immediately"
+                  onClick={() => setWhen("now")}
+                />
+                <ScheduleOption
+                  active={when === "later"}
+                  accent={accent}
+                  title="Schedule"
+                  subtitle="Pick a time today"
+                  onClick={() => setWhen("later")}
+                />
+              </div>
+              {when === "later" && (
+                <label className="block">
+                  <div className="text-[11px] uppercase tracking-wide text-text-tertiary mb-1.5">
+                    Time (local)
+                  </div>
+                  <input
+                    type="time"
+                    value={scheduleAt}
+                    onChange={(e) => setScheduleAt(e.target.value)}
+                    className="w-full h-9 rounded-md bg-raised border border-subtle px-2.5 font-mono text-[13px]"
+                  />
+                </label>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-[13px] text-text-secondary">
+                Review and confirm this run.
+              </div>
+              <div className="rounded-lg bg-raised border border-subtle divide-y divide-subtle text-[13px]">
+                <ReviewRow label="Agent" value={agent.name} />
+                <ReviewRow
+                  label="Channel"
+                  value={`${channel.name} ${channel.emoji}`}
+                />
+                <ReviewRow label="Brief" value={prompt} multiline />
+                <ReviewRow
+                  label="Schedule"
+                  value={when === "now" ? "Immediately" : `Today ${scheduleAt}`}
+                />
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Footer */}
+        <div className="border-t border-subtle bg-raised/40 flex items-center justify-between px-3 py-2">
+          {done ? (
+            <>
+              <button
+                onClick={() =>
+                  navigate({
+                    to: "/agents/$agentId",
+                    params: { agentId: agent.id },
+                  })
+                }
+                className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary px-2 h-8"
+              >
+                Open agent
+              </button>
+              <button
+                onClick={() => onDone(`${agent.name} started.`)}
+                className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium"
+              >
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={step === 0 ? onClose : prev}
+                className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2.5 h-8 text-[13px] text-text-secondary"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                {step === 0 ? "Cancel" : "Back"}
+              </button>
+              {step < RUN_STEPS.length - 1 ? (
+                <button
+                  onClick={next}
+                  disabled={!canNext}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 disabled:opacity-40 px-3 h-8 text-[13px] font-medium"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={start}
+                  disabled={running}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 disabled:opacity-60 px-3 h-8 text-[13px] font-medium"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  {running
+                    ? "Starting…"
+                    : when === "now"
+                      ? "Run now"
+                      : "Schedule"}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScheduleOption({
+  active,
+  accent,
+  title,
+  subtitle,
+  onClick,
+}: {
+  active: boolean;
+  accent: string;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-lg p-3 text-left",
+        active ? "bg-raised" : "bg-raised/40 hover:bg-raised",
+      )}
+      style={active ? { border: `2px solid ${accent}` } : { border: "1px solid var(--tp-subtle)" }}
+    >
+      <div className="text-[13px] font-medium">{title}</div>
+      <div className="text-[11px] text-text-tertiary mt-0.5">{subtitle}</div>
+    </button>
+  );
+}
+
+function ReviewRow({
+  label,
+  value,
+  multiline,
+}: {
+  label: string;
+  value: string;
+  multiline?: boolean;
+}) {
+  return (
+    <div className="flex gap-3 px-3 py-2.5">
+      <div className="w-20 shrink-0 text-[11px] uppercase tracking-wide text-text-tertiary pt-0.5">
+        {label}
+      </div>
+      <div
+        className={cn(
+          "flex-1 text-text-primary",
+          multiline ? "whitespace-pre-wrap" : "truncate",
+        )}
+      >
+        {value}
       </div>
     </div>
   );
