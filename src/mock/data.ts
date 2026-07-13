@@ -577,19 +577,8 @@ export const mockScenes: Scene[] = [
 export const totalDurationSeconds = () =>
   mockScenes.reduce((a, s) => a + s.duration, 0);
 
-export function categoryClass(cat: WorkflowCategory) {
-  switch (cat) {
-    case "music":
-      return "bg-[rgba(10,132,255,0.12)] text-[#0A84FF]";
-    case "documentary":
-      return "bg-[rgba(255,214,10,0.12)] text-[#FFD60A]";
-    case "education":
-      return "bg-[rgba(48,209,88,0.12)] text-[#30D158]";
-    case "sports":
-      return "bg-[rgba(255,69,58,0.12)] text-[#FF453A]";
-    default:
-      return "bg-[rgba(142,142,147,0.12)] text-[#8E8E93]";
-  }
+export function categoryClass(_cat: string) {
+  return "bg-raised text-text-secondary";
 }
 
 export function statusLeftBorder(status: WorkflowStatus) {
