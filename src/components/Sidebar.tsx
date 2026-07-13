@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Library,
+  Bot,
   Sparkles,
   Boxes,
   Play,
@@ -9,12 +9,13 @@ import {
 } from "lucide-react";
 import { mockUser, mockWorkflows } from "@/mock/data";
 import { cn } from "@/lib/tp";
+import { ThemeToggle } from "./ThemeToggle";
 
 const groups = [
   {
     label: "AUTOMATE",
     items: [
-      { to: "/library", label: "Library", icon: Library },
+      { to: "/agents", label: "Agents", icon: Bot },
       { to: "/skills", label: "Skills", icon: Sparkles },
     ],
   },
