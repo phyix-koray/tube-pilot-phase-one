@@ -880,17 +880,17 @@ function RunAgentWizard({
           ) : (
             <>
               <button
-                onClick={step === 0 ? onClose : prev}
+                onClick={clampedStep === 0 ? onClose : prev}
                 className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2.5 h-8 text-[13px] text-text-secondary"
               >
                 <ChevronLeft className="w-4 h-4" />
-                {step === 0 ? "Cancel" : "Back"}
+                {clampedStep === 0 ? "Cancel" : "Back"}
               </button>
               <div className="flex items-center gap-2">
                 <div className="text-[11px] text-text-tertiary">
-                  Step {step + 1} of {RUN_STEPS.length}
+                  Step {clampedStep + 1} of {RUN_STEPS.length}
                 </div>
-                {step < RUN_STEPS.length - 1 ? (
+                {clampedStep < RUN_STEPS.length - 1 ? (
                   <button
                     onClick={next}
                     className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium"
