@@ -359,6 +359,14 @@ function RunAgentWizard({
     }, 900);
   };
 
+  // Auto-draft the image guideline whenever the effective theme changes,
+  // unless the user has already edited it manually.
+  useEffect(() => {
+    if (guidelineTouched) return;
+    setImageGuideline(draftImageGuideline(effectiveTheme));
+  }, [effectiveTheme, guidelineTouched]);
+
+
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
