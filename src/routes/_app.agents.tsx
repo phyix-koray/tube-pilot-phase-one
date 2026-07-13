@@ -997,7 +997,14 @@ function RunAgentWizard({
                       label="Media"
                       value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only (same image as thumbnail + background)" : "Image + video (image = thumbnail, video loops as background)"}`}
                     />
-                    <ReviewRow label="Image guideline" value={imageGuideline} multiline />
+                    <ReviewRow
+                      label={outputMode === "gorsel" ? "Image skill" : "Thumbnail skill"}
+                      value={imageGuideline}
+                      multiline
+                    />
+                    {outputMode === "gorsel-video" && (
+                      <ReviewRow label="Video skill" value={videoGuideline} multiline />
+                    )}
                     <ReviewRow
                       label="Publish"
                       value={autoUpload ? `Auto-upload · ${visibility}` : "Manual upload"}
