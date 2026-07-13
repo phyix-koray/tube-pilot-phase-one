@@ -22,7 +22,7 @@ import {
 } from "@/mock/data";
 import { cn } from "@/lib/tp";
 
-export const Route = createFileRoute("/_app/videos")({
+export const Route = createFileRoute("/_app/videos/")({
   head: () => ({
     meta: [
       { title: "Videos — TubePilot" },
