@@ -816,9 +816,11 @@ function RunAgentWizard({
                   </Field>
                   <Field label="Timezone">
                     <Select value={tz} onChange={setTz}>
-                      <option>Europe/Istanbul</option>
-                      <option>UTC</option>
-                      <option>America/New_York</option>
+                      {TIMEZONES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
                     </Select>
                   </Field>
                 </div>
