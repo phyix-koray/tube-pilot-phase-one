@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Play, Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ChevronRight, Play, Plus, Search, X, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import {
   mockVideos,
   mockWorkflows,
@@ -24,6 +24,8 @@ export const Route = createFileRoute("/_app/agents")({
 
 function AgentsPage() {
   const [q, setQ] = useState("");
+  const [runTarget, setRunTarget] = useState<Workflow | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const pending = mockVideos.filter((v) => v.status === "pending_review");
 
   const filtered = useMemo(() => {
@@ -35,6 +37,12 @@ function AgentsPage() {
         w.description.toLowerCase().includes(needle),
     );
   }, [q]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   return (
     <div className="space-y-6">
@@ -77,15 +85,33 @@ function AgentsPage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((w) => (
-            <AgentCard key={w.id} w={w} />
+            <AgentCard key={w.id} w={w} onUse={() => setRunTarget(w)} />
           ))}
         </div>
       </div>
+
+      {runTarget && (
+        <RunAgentModal
+          agent={runTarget}
+          onClose={() => setRunTarget(null)}
+          onConfirm={() => {
+            setToast(`${runTarget.name} started. New video will appear in Videos when ready.`);
+            setRunTarget(null);
+          }}
+        />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg bg-text-primary text-[color:var(--tp-base)] px-4 py-3 text-[13px] font-medium card-shadow">
+          <CheckCircle2 className="w-4 h-4" />
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
 
-function AgentCard({ w }: { w: Workflow }) {
+function AgentCard({ w, onUse }: { w: Workflow; onUse: () => void }) {
   const accent = w.accent ?? "var(--tp-subtle)";
   return (
     <div
@@ -124,7 +150,10 @@ function AgentCard({ w }: { w: Workflow }) {
       </p>
 
       <div className="mt-5 border-t border-subtle bg-raised/40 flex items-center justify-between px-3 py-2">
-        <button className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium">
+        <button
+          onClick={onUse}
+          className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium"
+        >
           <Play className="w-3.5 h-3.5" />
           Use agent
         </button>
@@ -135,6 +164,77 @@ function AgentCard({ w }: { w: Workflow }) {
         >
           Configure <ChevronRight className="w-4 h-4" />
         </Link>
+      </div>
+    </div>
+  );
+}
+
+function RunAgentModal({
+  agent,
+  onClose,
+  onConfirm,
+}: {
+  agent: Workflow;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const navigate = useNavigate();
+  const accent = agent.accent ?? "var(--tp-subtle)";
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <button
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+      />
+      <div
+        className="relative w-full max-w-md rounded-2xl bg-surface card-shadow overflow-hidden"
+        style={{ border: `2px solid ${accent}` }}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 w-8 h-8 rounded-md hover:bg-hover flex items-center justify-center text-text-secondary"
+        >
+          <X className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-3 px-5 pt-5">
+          <div
+            className="w-11 h-11 rounded-full overflow-hidden shrink-0"
+            style={{ backgroundColor: accent }}
+          >
+            {agent.avatar && (
+              <img src={agent.avatar} alt="" className="w-full h-full object-cover" />
+            )}
+          </div>
+          <div>
+            <div className="text-[15px] font-semibold">{agent.name}</div>
+            <div className="text-[11px] text-text-tertiary">
+              {agent.steps.length} steps · runs on demand
+            </div>
+          </div>
+        </div>
+        <p className="px-5 mt-3 text-[13px] text-text-secondary">
+          Run <span className="text-text-primary font-medium">{agent.name}</span>{" "}
+          once with the current configuration? The finished video will appear in{" "}
+          <span className="text-text-primary">Videos</span> for your review.
+        </p>
+        <div className="mt-5 border-t border-subtle bg-raised/40 flex items-center justify-between px-3 py-2">
+          <button
+            onClick={() =>
+              navigate({ to: "/agents/$agentId", params: { agentId: agent.id } })
+            }
+            className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text-primary px-2 h-8"
+          >
+            Configure first <ChevronRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onConfirm}
+            className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3 h-8 text-[13px] font-medium"
+          >
+            <Play className="w-3.5 h-3.5" />
+            Run now
+          </button>
+        </div>
       </div>
     </div>
   );

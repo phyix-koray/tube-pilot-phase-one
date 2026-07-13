@@ -89,16 +89,17 @@ function VideosPage() {
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-semibold tracking-tight">Videos</h1>
+          <h1 className="text-[22px] font-semibold tracking-tight">Videos</h1>
           <p className="text-[13px] text-text-secondary mt-1">
-            All videos produced by your workflows.
+            All videos produced by your agents.
           </p>
         </div>
-        <button className="inline-flex items-center gap-1.5 rounded-lg bg-raised hover:bg-hover text-text-primary px-3.5 h-9 text-[13px]">
+        <button className="inline-flex items-center gap-1.5 rounded-lg bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-3.5 h-9 text-[13px] font-medium">
           <Upload className="w-4 h-4" />
           Upload manually
         </button>
       </div>
+
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
@@ -114,10 +115,11 @@ function VideosPage() {
           value={workflow}
           onChange={setWorkflow}
           options={[
-            ["all", "All workflows"],
+            ["all", "All agents"],
             ...mockWorkflows.map((w) => [w.id, w.name] as [string, string]),
           ]}
         />
+
         <FilterSelect
           value={status}
           onChange={(v) => setStatus(v as VideoStatus | "all")}
@@ -156,10 +158,12 @@ function VideosPage() {
           const ch = mockChannels.find((c) => c.id === v.channelId);
           const wf = mockWorkflows.find((w) => w.id === v.workflowId);
           const meta = statusMeta[v.status];
+          const accent = wf?.accent ?? "var(--tp-subtle)";
           return (
             <div
               key={v.id}
-              className="rounded-xl overflow-hidden bg-surface border border-subtle card-shadow"
+              className="rounded-xl overflow-hidden bg-surface card-shadow transition-transform hover:-translate-y-0.5"
+              style={{ border: `2px solid ${accent}` }}
             >
               <div className="relative aspect-video bg-raised">
                 <img
@@ -189,14 +193,14 @@ function VideosPage() {
                 )}
               </div>
 
-              <div className="p-4">
-                <div className="text-[15px] font-semibold line-clamp-2">
+              <div className="px-4 pt-4">
+                <div className="text-[14px] font-semibold line-clamp-2">
                   {v.title}
                 </div>
-                <div className="text-[13px] text-text-secondary mt-1">
-                  {ch?.name} {ch?.emoji} · {wf?.category ?? "—"}
+                <div className="text-[12px] text-text-secondary mt-1 truncate">
+                  {ch?.name} {ch?.emoji} · {wf?.name ?? "—"}
                 </div>
-                <div className="text-[13px] text-text-tertiary mt-1 font-mono">
+                <div className="text-[11px] text-text-tertiary mt-1 font-mono">
                   {new Date(v.createdAt).toLocaleString([], {
                     month: "short",
                     day: "2-digit",
@@ -205,35 +209,38 @@ function VideosPage() {
                   })}
                   {v.views != null && ` · ${v.views} views`}
                 </div>
+              </div>
 
-                <div className="flex items-center gap-2 mt-3">
+              <div className="mt-3 border-t border-subtle bg-raised/40 flex items-center justify-between px-2 py-1.5">
+                <div className="flex items-center gap-1">
                   <Link
                     to="/editor/$videoId"
                     params={{ videoId: v.id }}
-                    className="inline-flex items-center gap-1 rounded-md bg-raised hover:bg-hover px-2.5 h-8 text-[13px]"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 px-2.5 h-7 text-[12px] font-medium"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Pencil className="w-3 h-3" />
                     Edit
                   </Link>
-                  <button className="inline-flex items-center gap-1 rounded-md bg-raised hover:bg-hover px-2.5 h-8 text-[13px]">
-                    <Play className="w-3.5 h-3.5" />
+                  <button className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2 h-7 text-[12px] text-text-secondary">
+                    <Play className="w-3 h-3" />
                     Preview
                   </button>
                   {v.status === "pending_review" && (
-                    <button className="inline-flex items-center gap-1 rounded-md bg-green text-black hover:bg-green/90 px-2.5 h-8 text-[13px] font-medium">
-                      <Check className="w-3.5 h-3.5" />
+                    <button className="inline-flex items-center gap-1 rounded-md bg-green text-black hover:bg-green/90 px-2 h-7 text-[12px] font-medium">
+                      <Check className="w-3 h-3" />
                       Approve
                     </button>
                   )}
-                  <button className="ml-auto inline-flex items-center rounded-md bg-raised hover:bg-hover px-2 h-8">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
                 </div>
+                <button className="inline-flex items-center rounded-md hover:bg-hover px-1.5 h-7 text-text-secondary">
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
               </div>
             </div>
           );
         })}
       </div>
+
 
       {filtered.length === 0 && (
         <EmptyState
