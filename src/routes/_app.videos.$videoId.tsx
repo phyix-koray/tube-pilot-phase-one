@@ -22,6 +22,13 @@ const statusPill: Record<VideoStatus, { label: string; className: string }> = {
   failed: { label: "Failed", className: "bg-red/15 text-red border border-red/30" },
 };
 
+const fmt = (iso: string) =>
+  new Date(iso).toLocaleString("en-US", {
+    timeZone: "UTC",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }) + " UTC";
+
 function VideoDetailPage() {
   const { videoId } = useParams({ from: "/_app/videos/$videoId" });
   const navigate = useNavigate();
@@ -183,17 +190,17 @@ function VideoDetailPage() {
       <div className="rounded-xl border border-subtle bg-surface p-5">
         <div className="text-[15px] font-semibold">Status history</div>
         <ul className="mt-3 space-y-3">
-          <HistoryItem color="bg-blue" title="Created" time={new Date(v.createdAt).toLocaleString()} />
+          <HistoryItem color="bg-blue" title="Created" time={fmt(v.createdAt)} />
           <HistoryItem
             color="bg-blue"
             title="Uploading"
-            time={`Upload started · ${new Date(v.createdAt).toLocaleString()}`}
+            time={`Upload started · ${fmt(v.createdAt)}`}
           />
           {v.status === "published" && v.publishedAt && (
             <HistoryItem
               color="bg-green"
               title="Published"
-              time={new Date(v.publishedAt).toLocaleString()}
+              time={fmt(v.publishedAt)}
             />
           )}
           {v.status === "failed" && (
