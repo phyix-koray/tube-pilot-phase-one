@@ -186,6 +186,61 @@ const SUGGESTED_THEME =
 const SUGGESTED_TAGS =
   "slow jazz, soprano saxophone, Korean traditional hanok, rainy afternoon, clay teapot ambiance, paper screen acoustics, Seoul winter, meditative tempo, smoky intimacy";
 
+// Broad timezone catalog with GMT offset labels
+const TIMEZONES: Array<{ value: string; label: string }> = [
+  { value: "Pacific/Midway|-11:00", label: "GMT-11:00 · Midway" },
+  { value: "Pacific/Honolulu|-10:00", label: "GMT-10:00 · Honolulu" },
+  { value: "America/Anchorage|-09:00", label: "GMT-09:00 · Anchorage" },
+  { value: "America/Los_Angeles|-08:00", label: "GMT-08:00 · Los Angeles" },
+  { value: "America/Denver|-07:00", label: "GMT-07:00 · Denver" },
+  { value: "America/Chicago|-06:00", label: "GMT-06:00 · Chicago / Mexico City" },
+  { value: "America/New_York|-05:00", label: "GMT-05:00 · New York / Toronto" },
+  { value: "America/Halifax|-04:00", label: "GMT-04:00 · Halifax" },
+  { value: "America/Sao_Paulo|-03:00", label: "GMT-03:00 · São Paulo / Buenos Aires" },
+  { value: "Atlantic/Azores|-01:00", label: "GMT-01:00 · Azores" },
+  { value: "UTC|+00:00", label: "GMT+00:00 · UTC / London" },
+  { value: "Europe/Paris|+01:00", label: "GMT+01:00 · Paris / Berlin / Madrid" },
+  { value: "Europe/Athens|+02:00", label: "GMT+02:00 · Athens / Cairo" },
+  { value: "Europe/Istanbul|+03:00", label: "GMT+03:00 · Istanbul / Moscow / Riyadh" },
+  { value: "Asia/Dubai|+04:00", label: "GMT+04:00 · Dubai" },
+  { value: "Asia/Karachi|+05:00", label: "GMT+05:00 · Karachi" },
+  { value: "Asia/Kolkata|+05:30", label: "GMT+05:30 · India" },
+  { value: "Asia/Dhaka|+06:00", label: "GMT+06:00 · Dhaka" },
+  { value: "Asia/Bangkok|+07:00", label: "GMT+07:00 · Bangkok / Jakarta" },
+  { value: "Asia/Shanghai|+08:00", label: "GMT+08:00 · Shanghai / Singapore" },
+  { value: "Asia/Tokyo|+09:00", label: "GMT+09:00 · Tokyo / Seoul" },
+  { value: "Australia/Sydney|+10:00", label: "GMT+10:00 · Sydney" },
+  { value: "Pacific/Auckland|+12:00", label: "GMT+12:00 · Auckland" },
+];
+
+function tzLabel(v: string) {
+  return TIMEZONES.find((t) => t.value === v)?.label ?? v;
+}
+function tzOffset(v: string) {
+  const off = v.split("|")[1];
+  return off ? `GMT${off}` : v;
+}
+
+// Draft an image style guideline from the current theme text (mock "AI")
+function draftImageGuideline(theme: string): string {
+  const t = (theme || "").toLowerCase();
+  const bits: string[] = [];
+  bits.push("All generated visuals will share one consistent world:");
+  if (t.includes("hanok") || t.includes("seoul") || t.includes("korea"))
+    bits.push("• Interior of a softly lit Korean hanok — paper screens, dark timber beams, warm lantern glow.");
+  else if (t.includes("lofi") || t.includes("lo-fi") || t.includes("study"))
+    bits.push("• A cozy studio room with a rain-streaked window, warm desk lamp, plants and vinyl.");
+  else if (t.includes("jazz") || t.includes("lounge"))
+    bits.push("• The view from inside a luxury apartment — floor-to-ceiling windows over a city skyline.");
+  else
+    bits.push("• The view from inside a luxury home — tall windows framing a wide landscape outside.");
+  bits.push("• Every scene shot at golden hour / sunset — long amber light, deep shadows.");
+  bits.push("• Cinematic 16:9, photorealistic, shallow depth of field, film grain, no text, no people facing camera.");
+  bits.push("• Consistent color palette: warm amber, dusty rose, deep teal shadows.");
+  return bits.join("\n");
+}
+
+
 function RunAgentWizard({
   agent,
   onClose,
@@ -224,12 +279,16 @@ function RunAgentWizard({
   const [autoUpload, setAutoUpload] = useState(true);
   const [visibility, setVisibility] = useState<"unlisted" | "public" | "private">("unlisted");
 
-  // Schedule
-  const [mode, setMode] = useState<"one-shot" | "daily" | "weekly">("one-shot");
+  // Schedule — default to daily recurring
+  const [mode, setMode] = useState<"one-shot" | "daily" | "weekly">("daily");
   const [when, setWhen] = useState<"now" | "later">("now");
   const [scheduleAt, setScheduleAt] = useState("14:30");
-  const [tz, setTz] = useState("Europe/Istanbul");
+  const [tz, setTz] = useState("Europe/Istanbul|+03:00");
   const [weeklyDay, setWeeklyDay] = useState("Mon");
+
+  // Image guideline (skill) — auto-drafted from theme, editable
+  const [imageGuideline, setImageGuideline] = useState<string>("");
+  const [guidelineTouched, setGuidelineTouched] = useState(false);
 
   // Recurring theme (daily/weekly)
   const [themeSource, setThemeSource] = useState<"manual" | "channel">("channel");
@@ -299,6 +358,14 @@ function RunAgentWizard({
       setAnalyzing(false);
     }, 900);
   };
+
+  // Auto-draft the image guideline whenever the effective theme changes,
+  // unless the user has already edited it manually.
+  useEffect(() => {
+    if (guidelineTouched) return;
+    setImageGuideline(draftImageGuideline(effectiveTheme));
+  }, [effectiveTheme, guidelineTouched]);
+
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
   const prev = () => setStep((s) => Math.max(s - 1, 0));
@@ -637,18 +704,52 @@ function RunAgentWizard({
                     active={outputMode === "gorsel"}
                     accent={accent}
                     title="Image only"
-                    subtitle="Static thumbnail behind the audio"
+                    subtitle="Same image as thumbnail + static background"
                     onClick={() => setOutputMode("gorsel")}
                   />
                   <ChoiceOption
                     active={outputMode === "gorsel-video"}
                     accent={accent}
                     title="Image + video"
-                    subtitle="Ambient motion background"
+                    subtitle="Image = thumbnail, video loops as background"
                     onClick={() => setOutputMode("gorsel-video")}
                   />
                 </div>
               </Field>
+
+              <Field label="Image style guideline (AI skill)">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageGuideline(draftImageGuideline(effectiveTheme));
+                      setGuidelineTouched(false);
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Regenerate from theme
+                  </button>
+                  {guidelineTouched && (
+                    <span className="text-[10px] text-text-tertiary">edited manually</span>
+                  )}
+                </div>
+                <textarea
+                  rows={7}
+                  value={imageGuideline}
+                  onChange={(e) => {
+                    setImageGuideline(e.target.value);
+                    setGuidelineTouched(true);
+                  }}
+                  className="w-full rounded-md bg-raised border border-subtle p-2.5 text-[12px] leading-relaxed resize-none"
+                />
+                <div className="text-[11px] text-text-tertiary mt-1.5">
+                  {outputMode === "gorsel"
+                    ? "This guideline is applied to every generated image. The same image is used as the thumbnail AND as the static background behind the audio."
+                    : "This guideline is applied to the thumbnail image only. The looping background video is generated separately from the same theme."}
+                </div>
+              </Field>
+
               <div className="text-[11px] text-text-tertiary rounded-md bg-raised/60 border border-subtle p-2.5">
                 Renders through YT Music Combiner with Fade In on the first clip.
               </div>
@@ -749,9 +850,11 @@ function RunAgentWizard({
                   </Field>
                   <Field label="Timezone">
                     <Select value={tz} onChange={setTz}>
-                      <option>Europe/Istanbul</option>
-                      <option>UTC</option>
-                      <option>America/New_York</option>
+                      {TIMEZONES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
                     </Select>
                   </Field>
                 </div>
@@ -815,14 +918,15 @@ function RunAgentWizard({
                       label="Schedule"
                       value={
                         mode === "daily"
-                          ? `Daily · every day at ${scheduleAt} ${tz}`
+                          ? `Daily · every day at ${scheduleAt} (${tzOffset(tz)})`
                           : mode === "weekly"
-                            ? `Weekly · every ${weeklyDay} at ${scheduleAt} ${tz}`
+                            ? `Weekly · every ${weeklyDay} at ${scheduleAt} (${tzOffset(tz)})`
                             : when === "now"
                               ? "One-shot · run immediately"
-                              : `One-shot · today ${scheduleAt} ${tz}`
+                              : `One-shot · today ${scheduleAt} (${tzOffset(tz)})`
                       }
                     />
+                    <ReviewRow label="Timezone" value={tzLabel(tz)} />
                     <ReviewRow label="Theme" value={effectiveTheme} multiline />
                     {!isRecurring && <ReviewRow label="Tags" value={tags} multiline />}
                     <ReviewRow label="Video length" value={lengthLabel} />
@@ -834,12 +938,14 @@ function RunAgentWizard({
                     )}
                     <ReviewRow
                       label="Media"
-                      value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only" : "Image + video"}`}
+                      value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only (same image as thumbnail + background)" : "Image + video (image = thumbnail, video loops as background)"}`}
                     />
+                    <ReviewRow label="Image guideline" value={imageGuideline} multiline />
                     <ReviewRow
                       label="Publish"
                       value={autoUpload ? `Auto-upload · ${visibility}` : "Manual upload"}
                     />
+
                   </>
                 ) : (
                   <>
