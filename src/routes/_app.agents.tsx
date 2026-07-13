@@ -240,6 +240,22 @@ function draftImageGuideline(theme: string): string {
   return bits.join("\n");
 }
 
+function draftVideoGuideline(theme: string): string {
+  const t = (theme || "").toLowerCase();
+  const bits: string[] = [];
+  bits.push("Looping background video (seamless 6–10s loop, no cuts):");
+  if (t.includes("hanok") || t.includes("seoul"))
+    bits.push("• Slow push-in through paper screens, rain drifting past the window, lantern flicker.");
+  else if (t.includes("lofi") || t.includes("study"))
+    bits.push("• Rain streaks sliding down the window, warm lamp bloom, subtle steam from a mug.");
+  else
+    bits.push("• Gentle parallax across the skyline outside, drifting clouds, warm sunlight shifting on the wall.");
+  bits.push("• Ultra-slow motion, near-static — motion barely perceptible, meant to sit behind audio.");
+  bits.push("• Same color palette and lighting as the thumbnail image — must feel like the same world.");
+  bits.push("• No hard cuts, no text, no on-screen characters, no camera shake.");
+  return bits.join("\n");
+}
+
 
 function RunAgentWizard({
   agent,
