@@ -377,12 +377,12 @@ function RunAgentWizard({
     }, 900);
   };
 
-  // Auto-draft the image guideline whenever the effective theme changes,
-  // unless the user has already edited it manually.
+  // Auto-draft guidelines whenever the effective theme changes,
+  // unless the user has already edited them manually.
   useEffect(() => {
-    if (guidelineTouched) return;
-    setImageGuideline(draftImageGuideline(effectiveTheme));
-  }, [effectiveTheme, guidelineTouched]);
+    if (!guidelineTouched) setImageGuideline(draftImageGuideline(effectiveTheme));
+    if (!videoGuidelineTouched) setVideoGuideline(draftVideoGuideline(effectiveTheme));
+  }, [effectiveTheme, guidelineTouched, videoGuidelineTouched]);
 
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
