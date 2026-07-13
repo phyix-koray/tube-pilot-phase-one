@@ -918,14 +918,15 @@ function RunAgentWizard({
                       label="Schedule"
                       value={
                         mode === "daily"
-                          ? `Daily · every day at ${scheduleAt} ${tz}`
+                          ? `Daily · every day at ${scheduleAt} (${tzOffset(tz)})`
                           : mode === "weekly"
-                            ? `Weekly · every ${weeklyDay} at ${scheduleAt} ${tz}`
+                            ? `Weekly · every ${weeklyDay} at ${scheduleAt} (${tzOffset(tz)})`
                             : when === "now"
                               ? "One-shot · run immediately"
-                              : `One-shot · today ${scheduleAt} ${tz}`
+                              : `One-shot · today ${scheduleAt} (${tzOffset(tz)})`
                       }
                     />
+                    <ReviewRow label="Timezone" value={tzLabel(tz)} />
                     <ReviewRow label="Theme" value={effectiveTheme} multiline />
                     {!isRecurring && <ReviewRow label="Tags" value={tags} multiline />}
                     <ReviewRow label="Video length" value={lengthLabel} />
@@ -937,12 +938,14 @@ function RunAgentWizard({
                     )}
                     <ReviewRow
                       label="Media"
-                      value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only" : "Image + video"}`}
+                      value={`${makeThumbnail ? "Thumbnail on" : "Thumbnail off"} · ${outputMode === "gorsel" ? "Image only (same image as thumbnail + background)" : "Image + video (image = thumbnail, video loops as background)"}`}
                     />
+                    <ReviewRow label="Image guideline" value={imageGuideline} multiline />
                     <ReviewRow
                       label="Publish"
                       value={autoUpload ? `Auto-upload · ${visibility}` : "Manual upload"}
                     />
+
                   </>
                 ) : (
                   <>
