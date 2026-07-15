@@ -427,6 +427,15 @@ function RunAgentWizard({
   ] as const;
   const [videoLength, setVideoLength] = useState<string>("5-10m");
 
+  // Video agent (viral topic finder) state
+  const [genre, setGenre] = useState(
+    agent.id === "stock-video-generator" ? "history" : "tech",
+  );
+  const [searching, setSearching] = useState(false);
+  const [topics, setTopics] = useState<ViralTopic[]>([]);
+  const [pickedTopic, setPickedTopic] = useState<string | null>(null);
+  const [seenTitles, setSeenTitles] = useState<string[]>([]);
+
   const isRecurring = mode === "daily" || mode === "weekly";
 
   const RUN_STEPS: Step[] = isMusic
@@ -441,12 +450,20 @@ function RunAgentWizard({
         { key: "publishing", title: "Publishing" },
         { key: "review", title: "Review" },
       ]
-    : [
-        { key: "channel", title: "Channel" },
-        { key: "inputs", title: "Inputs" },
-        { key: "schedule", title: "Schedule" },
-        { key: "review", title: "Review" },
-      ];
+    : isVideo
+      ? [
+          { key: "channel", title: "Channel" },
+          { key: "schedule", title: "Schedule" },
+          { key: "topic", title: isRecurring ? "Niche" : "Viral topic" },
+          { key: "length", title: "Video length" },
+          { key: "review", title: "Review" },
+        ]
+      : [
+          { key: "channel", title: "Channel" },
+          { key: "inputs", title: "Inputs" },
+          { key: "schedule", title: "Schedule" },
+          { key: "review", title: "Review" },
+        ];
 
   const [step, setStep] = useState(0);
   const clampedStep = Math.min(step, RUN_STEPS.length - 1);
