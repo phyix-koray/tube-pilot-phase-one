@@ -1344,7 +1344,7 @@ function RunAgentWizard({
                     <Play className="w-3.5 h-3.5" />
                     {running
                       ? "Starting…"
-                      : isMusic && isRecurring
+                      : (isMusic || isVideo) && isRecurring
                         ? mode === "daily"
                           ? "Start daily"
                           : "Start weekly"
