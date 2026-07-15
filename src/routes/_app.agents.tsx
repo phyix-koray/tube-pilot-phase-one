@@ -1243,6 +1243,41 @@ function RunAgentWizard({
                     />
 
                   </>
+                ) : isVideo ? (
+                  <>
+                    <ReviewRow
+                      label="Schedule"
+                      value={
+                        mode === "daily"
+                          ? `Daily · every day at ${scheduleAt} (${tzOffset(tz)})`
+                          : mode === "weekly"
+                            ? `Weekly · every ${weeklyDay} at ${scheduleAt} (${tzOffset(tz)})`
+                            : when === "now"
+                              ? "One-shot · run immediately"
+                              : `One-shot · today ${scheduleAt} (${tzOffset(tz)})`
+                      }
+                    />
+                    <ReviewRow label="Timezone" value={tzLabel(tz)} />
+                    <ReviewRow label="Niche" value={genre || "—"} />
+                    {isRecurring ? (
+                      <ReviewRow
+                        label="Topic source"
+                        value={`Auto — pick highest-scoring viral topic each run, skipping the ${seenTitles.length} title${seenTitles.length === 1 ? "" : "s"} already used.`}
+                        multiline
+                      />
+                    ) : (
+                      <ReviewRow
+                        label="Topic"
+                        value={
+                          pickedTopicObj
+                            ? `${pickedTopicObj.title} · score ${pickedTopicObj.score} · ${formatNum(pickedTopicObj.views)} views`
+                            : "No topic picked yet — go back to the Viral topic step."
+                        }
+                        multiline
+                      />
+                    )}
+                    <ReviewRow label="Video length" value={lengthLabel} />
+                  </>
                 ) : (
                   <>
                     <ReviewRow label="Brief" value={prompt} multiline />
