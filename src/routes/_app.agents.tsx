@@ -1042,7 +1042,7 @@ function RunAgentWizard({
             </div>
           ) : stepKey === "schedule" ? (
             <div className="space-y-4">
-              {isMusic ? (
+              {isMusic || isVideo ? (
                 <>
                   <Field label="Run mode">
                     <div className="grid grid-cols-3 gap-2">
