@@ -491,6 +491,17 @@ function RunAgentWizard({
     }, 900);
   };
 
+  const runViralSearch = () => {
+    setSearching(true);
+    setPickedTopic(null);
+    setTimeout(() => {
+      setTopics(mockViralTopics(genre, seenTitles));
+      setSearching(false);
+    }, 1100);
+  };
+
+  const pickedTopicObj = topics.find((t) => t.id === pickedTopic) ?? null;
+
   // Auto-draft guidelines whenever the effective theme changes,
   // unless the user has already edited them manually.
   useEffect(() => {
