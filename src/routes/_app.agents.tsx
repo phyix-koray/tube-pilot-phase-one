@@ -773,7 +773,116 @@ function RunAgentWizard({
                 </Field>
               )}
             </div>
-          ) : stepKey === "length" && isMusic ? (
+          ) : stepKey === "topic" && isVideo ? (
+            <div className="space-y-4">
+              <div className="text-[12px] text-text-tertiary">
+                {isRecurring
+                  ? "Set the niche once — every scheduled run will search YouTube for the day's top-trending videos in this niche. Topics you've already used are automatically skipped."
+                  : "Search YouTube for videos that are currently trending in your niche and pick one to base this run on."}
+              </div>
+              <Field label="Niche / genre">
+                <div className="flex gap-2">
+                  <input
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value)}
+                    placeholder="e.g. finance, history, tech, geopolitics"
+                    className="flex-1 h-9 rounded-md bg-raised border border-subtle px-2.5 text-[13px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={runViralSearch}
+                    disabled={!genre.trim() || searching}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 disabled:opacity-60 px-3 h-9 text-[13px] font-medium"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {searching ? "Searching…" : "Find viral topics"}
+                  </button>
+                </div>
+              </Field>
+
+              {isRecurring && seenTitles.length > 0 && (
+                <div className="rounded-md bg-raised/60 border border-subtle p-2.5 text-[11px] text-text-tertiary">
+                  {seenTitles.length} topic{seenTitles.length > 1 ? "s" : ""} already used and saved to this agent's history — the finder will skip them on future runs.
+                </div>
+              )}
+
+              {topics.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-wide text-text-tertiary">
+                    {isRecurring
+                      ? "Preview — top viral results right now"
+                      : "Pick one to run"}
+                  </div>
+                  {topics.map((t) => {
+                    const active = pickedTopic === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() =>
+                          isRecurring
+                            ? undefined
+                            : setPickedTopic(active ? null : t.id)
+                        }
+                        className={cn(
+                          "w-full text-left rounded-lg p-3",
+                          active ? "bg-raised" : "bg-raised/40 hover:bg-raised",
+                          isRecurring && "cursor-default",
+                        )}
+                        style={
+                          active
+                            ? { border: `2px solid ${accent}` }
+                            : { border: "1px solid var(--tp-subtle)" }
+                        }
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-[13px] font-medium truncate">
+                              {t.title}
+                            </div>
+                            <div className="text-[11px] text-text-tertiary mt-0.5">
+                              {t.channel} · {t.publishedDaysAgo}d ago
+                            </div>
+                          </div>
+                          <div
+                            className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                            style={{ backgroundColor: accent, color: "#0a0a0b" }}
+                          >
+                            {t.score}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex items-center gap-3 text-[11px] text-text-tertiary">
+                          <span>{formatNum(t.views)} views</span>
+                          <span>{formatNum(t.subs)} subs</span>
+                          <span>ratio {t.ratio}×</span>
+                          <span>{formatNum(t.velocity)}/day</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {!isRecurring && pickedTopicObj && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSeenTitles((s) =>
+                          Array.from(new Set([...s, pickedTopicObj.title])),
+                        );
+                      }}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Mark "{pickedTopicObj.title}" as used (will be skipped next time)
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {topics.length === 0 && !searching && (
+                <div className="rounded-md bg-raised/40 border border-dashed border-subtle p-4 text-center text-[12px] text-text-tertiary">
+                  Enter a niche and click <b>Find viral topics</b>. The AI runs a YouTube search filtered by view velocity and view/subscriber ratio (mirrors the viral_finder.py pipeline).
+                </div>
+              )}
+            </div>
+          ) : stepKey === "length" && (isMusic || isVideo) ? (
             <div className="space-y-3">
               <div className="text-[12px] text-text-tertiary">
                 How long should each published video be? Ranges up to 24 hours.
