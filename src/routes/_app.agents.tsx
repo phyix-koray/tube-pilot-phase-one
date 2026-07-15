@@ -257,6 +257,101 @@ function draftVideoGuideline(theme: string): string {
 }
 
 
+// ---------------------------------------------------------------------------
+// Viral topic finder (mock) — mirrors viral_finder.py output shape
+// ---------------------------------------------------------------------------
+
+type ViralTopic = {
+  id: string;
+  title: string;
+  channel: string;
+  views: number;
+  subs: number;
+  ratio: number;
+  velocity: number;
+  score: number;
+  publishedDaysAgo: number;
+};
+
+// Deterministic-ish mock viral topics per genre. In real backend this comes
+// from YouTube Data API + Claude subtopic expansion (see viral_finder.py).
+function mockViralTopics(genre: string, seenTitles: string[]): ViralTopic[] {
+  const g = genre.trim().toLowerCase() || "general";
+  const seedByGenre: Record<string, string[]> = {
+    finance: [
+      "The $2 Trillion Debt Nobody Talks About",
+      "Why the Yen Just Broke Its 34-Year Low",
+      "How BlackRock Quietly Owns Your City",
+      "The Silent Bank Run of 2026",
+      "The Return of the Gold Standard?",
+      "Why Warren Buffett Just Sold Apple",
+      "Inside the Coming Commercial Real Estate Crash",
+      "The Country Paying Off Debt With Bitcoin",
+    ],
+    history: [
+      "The Roman Emperor Who Faked His Own Death",
+      "The Assassination That Almost Erased America",
+      "The Library That Held Human Knowledge — And Burned",
+      "The Ottoman Spy Who Redrew Europe",
+      "The Forgotten War That Made China",
+      "The Ship That Vanished With 600 Souls",
+    ],
+    tech: [
+      "OpenAI's Silent Pivot Nobody Noticed",
+      "The GPU Shortage Is a Lie",
+      "Why Every Startup Is Suddenly Copying Cursor",
+      "The One-Person Billion-Dollar Company",
+      "The Real Reason Apple Killed the Car",
+    ],
+    general: [
+      "The Story Behind the Photo That Broke the Internet",
+      "The Town That Voted to Delete Itself",
+      "The Man Who Predicted 2026",
+      "The Netflix Show Netflix Doesn't Want You to Find",
+      "The Silent Collapse of the Middle Class",
+      "The Country Paying People to Move There",
+    ],
+  };
+  const pool =
+    seedByGenre[
+      Object.keys(seedByGenre).find((k) => g.includes(k)) ?? "general"
+    ] ?? seedByGenre.general;
+  const filtered = pool.filter((t) => !seenTitles.includes(t));
+  const rng = (seed: number) => {
+    let x = seed;
+    return () => {
+      x = (x * 9301 + 49297) % 233280;
+      return x / 233280;
+    };
+  };
+  const r = rng(g.length * 7 + filtered.length * 13 + 1);
+  return filtered.slice(0, 6).map((title, i) => {
+    const subs = Math.floor(50_000 + r() * 3_000_000);
+    const views = Math.floor(subs * (0.6 + r() * 4.2));
+    const days = Math.max(1, Math.floor(1 + r() * 18));
+    const ratio = +(views / subs).toFixed(2);
+    const velocity = Math.floor(views / days);
+    const score = +(ratio * 10 + velocity / 1000).toFixed(1);
+    return {
+      id: `vt-${i}-${g}`,
+      title,
+      channel: ["@newswire", "@byteline", "@thearchive", "@moneyframe", "@storyloop"][i % 5],
+      views,
+      subs,
+      ratio,
+      velocity,
+      score,
+      publishedDaysAgo: days,
+    };
+  });
+}
+
+function formatNum(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
 function RunAgentWizard({
   agent,
   onClose,
@@ -269,6 +364,8 @@ function RunAgentWizard({
   const navigate = useNavigate();
   const accent = agent.accent ?? "var(--tp-subtle)";
   const isMusic = agent.id === "music-composer";
+  const isVideo =
+    agent.id === "ai-video-generator" || agent.id === "stock-video-generator";
 
   const suggestedChannel =
     mockChannels.find((c) => c.usedIn?.includes(agent.name)) ?? mockChannels[0];
