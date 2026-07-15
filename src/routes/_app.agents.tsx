@@ -257,6 +257,101 @@ function draftVideoGuideline(theme: string): string {
 }
 
 
+// ---------------------------------------------------------------------------
+// Viral topic finder (mock) — mirrors viral_finder.py output shape
+// ---------------------------------------------------------------------------
+
+type ViralTopic = {
+  id: string;
+  title: string;
+  channel: string;
+  views: number;
+  subs: number;
+  ratio: number;
+  velocity: number;
+  score: number;
+  publishedDaysAgo: number;
+};
+
+// Deterministic-ish mock viral topics per genre. In real backend this comes
+// from YouTube Data API + Claude subtopic expansion (see viral_finder.py).
+function mockViralTopics(genre: string, seenTitles: string[]): ViralTopic[] {
+  const g = genre.trim().toLowerCase() || "general";
+  const seedByGenre: Record<string, string[]> = {
+    finance: [
+      "The $2 Trillion Debt Nobody Talks About",
+      "Why the Yen Just Broke Its 34-Year Low",
+      "How BlackRock Quietly Owns Your City",
+      "The Silent Bank Run of 2026",
+      "The Return of the Gold Standard?",
+      "Why Warren Buffett Just Sold Apple",
+      "Inside the Coming Commercial Real Estate Crash",
+      "The Country Paying Off Debt With Bitcoin",
+    ],
+    history: [
+      "The Roman Emperor Who Faked His Own Death",
+      "The Assassination That Almost Erased America",
+      "The Library That Held Human Knowledge — And Burned",
+      "The Ottoman Spy Who Redrew Europe",
+      "The Forgotten War That Made China",
+      "The Ship That Vanished With 600 Souls",
+    ],
+    tech: [
+      "OpenAI's Silent Pivot Nobody Noticed",
+      "The GPU Shortage Is a Lie",
+      "Why Every Startup Is Suddenly Copying Cursor",
+      "The One-Person Billion-Dollar Company",
+      "The Real Reason Apple Killed the Car",
+    ],
+    general: [
+      "The Story Behind the Photo That Broke the Internet",
+      "The Town That Voted to Delete Itself",
+      "The Man Who Predicted 2026",
+      "The Netflix Show Netflix Doesn't Want You to Find",
+      "The Silent Collapse of the Middle Class",
+      "The Country Paying People to Move There",
+    ],
+  };
+  const pool =
+    seedByGenre[
+      Object.keys(seedByGenre).find((k) => g.includes(k)) ?? "general"
+    ] ?? seedByGenre.general;
+  const filtered = pool.filter((t) => !seenTitles.includes(t));
+  const rng = (seed: number) => {
+    let x = seed;
+    return () => {
+      x = (x * 9301 + 49297) % 233280;
+      return x / 233280;
+    };
+  };
+  const r = rng(g.length * 7 + filtered.length * 13 + 1);
+  return filtered.slice(0, 6).map((title, i) => {
+    const subs = Math.floor(50_000 + r() * 3_000_000);
+    const views = Math.floor(subs * (0.6 + r() * 4.2));
+    const days = Math.max(1, Math.floor(1 + r() * 18));
+    const ratio = +(views / subs).toFixed(2);
+    const velocity = Math.floor(views / days);
+    const score = +(ratio * 10 + velocity / 1000).toFixed(1);
+    return {
+      id: `vt-${i}-${g}`,
+      title,
+      channel: ["@newswire", "@byteline", "@thearchive", "@moneyframe", "@storyloop"][i % 5],
+      views,
+      subs,
+      ratio,
+      velocity,
+      score,
+      publishedDaysAgo: days,
+    };
+  });
+}
+
+function formatNum(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
 function RunAgentWizard({
   agent,
   onClose,
@@ -269,6 +364,8 @@ function RunAgentWizard({
   const navigate = useNavigate();
   const accent = agent.accent ?? "var(--tp-subtle)";
   const isMusic = agent.id === "music-composer";
+  const isVideo =
+    agent.id === "ai-video-generator" || agent.id === "stock-video-generator";
 
   const suggestedChannel =
     mockChannels.find((c) => c.usedIn?.includes(agent.name)) ?? mockChannels[0];
@@ -330,6 +427,15 @@ function RunAgentWizard({
   ] as const;
   const [videoLength, setVideoLength] = useState<string>("5-10m");
 
+  // Video agent (viral topic finder) state
+  const [genre, setGenre] = useState(
+    agent.id === "stock-video-generator" ? "history" : "tech",
+  );
+  const [searching, setSearching] = useState(false);
+  const [topics, setTopics] = useState<ViralTopic[]>([]);
+  const [pickedTopic, setPickedTopic] = useState<string | null>(null);
+  const [seenTitles, setSeenTitles] = useState<string[]>([]);
+
   const isRecurring = mode === "daily" || mode === "weekly";
 
   const RUN_STEPS: Step[] = isMusic
@@ -344,12 +450,20 @@ function RunAgentWizard({
         { key: "publishing", title: "Publishing" },
         { key: "review", title: "Review" },
       ]
-    : [
-        { key: "channel", title: "Channel" },
-        { key: "inputs", title: "Inputs" },
-        { key: "schedule", title: "Schedule" },
-        { key: "review", title: "Review" },
-      ];
+    : isVideo
+      ? [
+          { key: "channel", title: "Channel" },
+          { key: "schedule", title: "Schedule" },
+          { key: "topic", title: isRecurring ? "Niche" : "Viral topic" },
+          { key: "length", title: "Video length" },
+          { key: "review", title: "Review" },
+        ]
+      : [
+          { key: "channel", title: "Channel" },
+          { key: "inputs", title: "Inputs" },
+          { key: "schedule", title: "Schedule" },
+          { key: "review", title: "Review" },
+        ];
 
   const [step, setStep] = useState(0);
   const clampedStep = Math.min(step, RUN_STEPS.length - 1);
@@ -376,6 +490,17 @@ function RunAgentWizard({
       setAnalyzing(false);
     }, 900);
   };
+
+  const runViralSearch = () => {
+    setSearching(true);
+    setPickedTopic(null);
+    setTimeout(() => {
+      setTopics(mockViralTopics(genre, seenTitles));
+      setSearching(false);
+    }, 1100);
+  };
+
+  const pickedTopicObj = topics.find((t) => t.id === pickedTopic) ?? null;
 
   // Auto-draft guidelines whenever the effective theme changes,
   // unless the user has already edited them manually.
@@ -648,7 +773,116 @@ function RunAgentWizard({
                 </Field>
               )}
             </div>
-          ) : stepKey === "length" && isMusic ? (
+          ) : stepKey === "topic" && isVideo ? (
+            <div className="space-y-4">
+              <div className="text-[12px] text-text-tertiary">
+                {isRecurring
+                  ? "Set the niche once — every scheduled run will search YouTube for the day's top-trending videos in this niche. Topics you've already used are automatically skipped."
+                  : "Search YouTube for videos that are currently trending in your niche and pick one to base this run on."}
+              </div>
+              <Field label="Niche / genre">
+                <div className="flex gap-2">
+                  <input
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value)}
+                    placeholder="e.g. finance, history, tech, geopolitics"
+                    className="flex-1 h-9 rounded-md bg-raised border border-subtle px-2.5 text-[13px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={runViralSearch}
+                    disabled={!genre.trim() || searching}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 disabled:opacity-60 px-3 h-9 text-[13px] font-medium"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {searching ? "Searching…" : "Find viral topics"}
+                  </button>
+                </div>
+              </Field>
+
+              {isRecurring && seenTitles.length > 0 && (
+                <div className="rounded-md bg-raised/60 border border-subtle p-2.5 text-[11px] text-text-tertiary">
+                  {seenTitles.length} topic{seenTitles.length > 1 ? "s" : ""} already used and saved to this agent's history — the finder will skip them on future runs.
+                </div>
+              )}
+
+              {topics.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-wide text-text-tertiary">
+                    {isRecurring
+                      ? "Preview — top viral results right now"
+                      : "Pick one to run"}
+                  </div>
+                  {topics.map((t) => {
+                    const active = pickedTopic === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() =>
+                          isRecurring
+                            ? undefined
+                            : setPickedTopic(active ? null : t.id)
+                        }
+                        className={cn(
+                          "w-full text-left rounded-lg p-3",
+                          active ? "bg-raised" : "bg-raised/40 hover:bg-raised",
+                          isRecurring && "cursor-default",
+                        )}
+                        style={
+                          active
+                            ? { border: `2px solid ${accent}` }
+                            : { border: "1px solid var(--tp-subtle)" }
+                        }
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-[13px] font-medium truncate">
+                              {t.title}
+                            </div>
+                            <div className="text-[11px] text-text-tertiary mt-0.5">
+                              {t.channel} · {t.publishedDaysAgo}d ago
+                            </div>
+                          </div>
+                          <div
+                            className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                            style={{ backgroundColor: accent, color: "#0a0a0b" }}
+                          >
+                            {t.score}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex items-center gap-3 text-[11px] text-text-tertiary">
+                          <span>{formatNum(t.views)} views</span>
+                          <span>{formatNum(t.subs)} subs</span>
+                          <span>ratio {t.ratio}×</span>
+                          <span>{formatNum(t.velocity)}/day</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {!isRecurring && pickedTopicObj && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSeenTitles((s) =>
+                          Array.from(new Set([...s, pickedTopicObj.title])),
+                        );
+                      }}
+                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
+                    >
+                      Mark "{pickedTopicObj.title}" as used (will be skipped next time)
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {topics.length === 0 && !searching && (
+                <div className="rounded-md bg-raised/40 border border-dashed border-subtle p-4 text-center text-[12px] text-text-tertiary">
+                  Enter a niche and click <b>Find viral topics</b>. The AI runs a YouTube search filtered by view velocity and view/subscriber ratio (mirrors the viral_finder.py pipeline).
+                </div>
+              )}
+            </div>
+          ) : stepKey === "length" && (isMusic || isVideo) ? (
             <div className="space-y-3">
               <div className="text-[12px] text-text-tertiary">
                 How long should each published video be? Ranges up to 24 hours.
@@ -808,7 +1042,7 @@ function RunAgentWizard({
             </div>
           ) : stepKey === "schedule" ? (
             <div className="space-y-4">
-              {isMusic ? (
+              {isMusic || isVideo ? (
                 <>
                   <Field label="Run mode">
                     <div className="grid grid-cols-3 gap-2">
@@ -890,7 +1124,7 @@ function RunAgentWizard({
                 </Field>
               )}
 
-              {(isRecurring || (!isMusic && when === "later") || (isMusic && mode === "one-shot" && when === "later")) && (
+              {(isRecurring || (!isMusic && !isVideo && when === "later") || ((isMusic || isVideo) && mode === "one-shot" && when === "later")) && (
                 <div className="grid grid-cols-2 gap-3">
                   <Field label={isRecurring ? "Run time" : "Time (local)"}>
                     <input
@@ -1009,6 +1243,41 @@ function RunAgentWizard({
                     />
 
                   </>
+                ) : isVideo ? (
+                  <>
+                    <ReviewRow
+                      label="Schedule"
+                      value={
+                        mode === "daily"
+                          ? `Daily · every day at ${scheduleAt} (${tzOffset(tz)})`
+                          : mode === "weekly"
+                            ? `Weekly · every ${weeklyDay} at ${scheduleAt} (${tzOffset(tz)})`
+                            : when === "now"
+                              ? "One-shot · run immediately"
+                              : `One-shot · today ${scheduleAt} (${tzOffset(tz)})`
+                      }
+                    />
+                    <ReviewRow label="Timezone" value={tzLabel(tz)} />
+                    <ReviewRow label="Niche" value={genre || "—"} />
+                    {isRecurring ? (
+                      <ReviewRow
+                        label="Topic source"
+                        value={`Auto — pick highest-scoring viral topic each run, skipping the ${seenTitles.length} title${seenTitles.length === 1 ? "" : "s"} already used.`}
+                        multiline
+                      />
+                    ) : (
+                      <ReviewRow
+                        label="Topic"
+                        value={
+                          pickedTopicObj
+                            ? `${pickedTopicObj.title} · score ${pickedTopicObj.score} · ${formatNum(pickedTopicObj.views)} views`
+                            : "No topic picked yet — go back to the Viral topic step."
+                        }
+                        multiline
+                      />
+                    )}
+                    <ReviewRow label="Video length" value={lengthLabel} />
+                  </>
                 ) : (
                   <>
                     <ReviewRow label="Brief" value={prompt} multiline />
@@ -1075,7 +1344,7 @@ function RunAgentWizard({
                     <Play className="w-3.5 h-3.5" />
                     {running
                       ? "Starting…"
-                      : isMusic && isRecurring
+                      : (isMusic || isVideo) && isRecurring
                         ? mode === "daily"
                           ? "Start daily"
                           : "Start weekly"
