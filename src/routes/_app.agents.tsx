@@ -1124,7 +1124,7 @@ function RunAgentWizard({
                 </Field>
               )}
 
-              {(isRecurring || (!isMusic && when === "later") || (isMusic && mode === "one-shot" && when === "later")) && (
+              {(isRecurring || (!isMusic && !isVideo && when === "later") || ((isMusic || isVideo) && mode === "one-shot" && when === "later")) && (
                 <div className="grid grid-cols-2 gap-3">
                   <Field label={isRecurring ? "Run time" : "Time (local)"}>
                     <input
