@@ -1273,10 +1273,23 @@ export function RunAgentWizard({
                                     ),
                                   )
                                 }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    const next = e.currentTarget
+                                      .closest("tr")
+                                      ?.nextElementSibling?.querySelectorAll("input")[1] as
+                                      | HTMLInputElement
+                                      | undefined;
+                                    next?.focus();
+                                  }
+                                }}
                                 className={cn(input, "font-medium")}
                                 style={{ ["--tw-ring-color" as string]: accent }}
+                                placeholder="Video title…"
                               />
                             </td>
+
                             <td className={cell}>
                               <textarea
                                 rows={1}
