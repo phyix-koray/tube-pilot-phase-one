@@ -748,10 +748,12 @@ export function RunAgentWizard({
   const iterateFrom = (t: ViralTopic) => {
     setIteratingId(t.id);
     setTimeout(() => {
-      setIterations((prev) => ({
-        ...prev,
-        [t.id]: mockIterateTitles(t.title, genre),
-      }));
+      const news = mockMoreLikeThis(t, genre);
+      setIterations((prev) => ({ ...prev, [t.id]: news }));
+      setTopics((prev) => {
+        const existing = new Set(prev.map((p) => p.id));
+        return [...prev, ...news.filter((n) => !existing.has(n.id))];
+      });
       setIteratingId(null);
     }, 3000);
   };
