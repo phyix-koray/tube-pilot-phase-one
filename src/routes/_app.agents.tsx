@@ -767,6 +767,26 @@ export function RunAgentWizard({
     if (!videoGuidelineTouched) setVideoGuideline(draftVideoGuideline(effectiveTheme));
   }, [effectiveTheme, guidelineTouched, videoGuidelineTouched]);
 
+  // Auto-generate the recurring content plan the first time the user
+  // reaches the "plan" step, so the spreadsheet is never empty.
+  const currentKey = RUN_STEPS[Math.min(step, RUN_STEPS.length - 1)].key;
+  useEffect(() => {
+    if (currentKey !== "plan" || !isVideo) return;
+    if (plan.length > 0 || planGenerating) return;
+    setPlanGenerating(true);
+    const t = setTimeout(() => {
+      setPlan(
+        mockPlanRows(
+          genre || "editorial",
+          mode === "weekly" ? "weekly" : "daily",
+          mode === "weekly" ? 6 : 7,
+        ),
+      );
+      setPlanGenerating(false);
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [currentKey, isVideo, plan.length, planGenerating, genre, mode]);
+
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
   const prev = () => setStep((s) => Math.max(s - 1, 0));
@@ -1202,156 +1222,179 @@ export function RunAgentWizard({
               {planGenerating || plan.length === 0 ? (
                 <ThinkingBlock accent={accent} kind="plan" />
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-subtle">
-                  <table className="w-full text-[12px] min-w-[1100px]">
-                    <thead className="bg-raised/60 text-text-tertiary text-[10.5px] uppercase tracking-wide">
+                <div className="overflow-x-auto rounded-lg border border-subtle bg-raised/30">
+                  <table className="w-full text-[12px] min-w-[1120px] border-separate border-spacing-0">
+                    <thead className="bg-raised text-text-tertiary text-[10.5px] uppercase tracking-wide sticky top-0 z-10">
                       <tr>
-                        <th className="text-left font-medium px-2.5 py-2 w-24">Date</th>
-                        <th className="text-left font-medium px-2.5 py-2 w-56">Video title</th>
-                        <th className="text-left font-medium px-2.5 py-2 min-w-[260px]">Topic (detailed)</th>
-                        <th className="text-left font-medium px-2.5 py-2 w-28">Length</th>
-                        <th className="text-left font-medium px-2.5 py-2 w-32">Format</th>
-                        <th className="text-left font-medium px-2.5 py-2 w-40">Art style</th>
-                        <th className="text-left font-medium px-2.5 py-2 w-16">Web</th>
-                        <th className="text-left font-medium px-2.5 py-2 w-16">Deep</th>
-                        <th className="w-8"></th>
+                        <th className="text-left font-medium px-2 py-2 w-10 border-b border-subtle">#</th>
+                        <th className="text-left font-medium px-2 py-2 w-28 border-b border-l border-subtle">Date</th>
+                        <th className="text-left font-medium px-2 py-2 w-56 border-b border-l border-subtle">Video title</th>
+                        <th className="text-left font-medium px-2 py-2 min-w-[260px] border-b border-l border-subtle">Topic (detailed)</th>
+                        <th className="text-left font-medium px-2 py-2 w-24 border-b border-l border-subtle">Length</th>
+                        <th className="text-left font-medium px-2 py-2 w-32 border-b border-l border-subtle">Format</th>
+                        <th className="text-left font-medium px-2 py-2 w-40 border-b border-l border-subtle">Art style</th>
+                        <th className="text-center font-medium px-2 py-2 w-14 border-b border-l border-subtle">Web</th>
+                        <th className="text-center font-medium px-2 py-2 w-14 border-b border-l border-subtle">Deep</th>
+                        <th className="w-10 border-b border-l border-subtle"></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-subtle">
-                      {plan.map((row, idx) => (
-                        <tr key={row.id} className="align-top hover:bg-hover/40">
-                          <td className="px-1.5 py-1.5">
-                            <input
-                              type="date"
-                              value={row.date}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, date: e.target.value } : r,
-                                  ),
-                                )
-                              }
-                              className="w-full h-8 rounded-sm bg-transparent hover:bg-raised focus:bg-raised border border-transparent focus:border-subtle px-1.5 text-[12px] font-mono"
-                            />
-                          </td>
-                          <td className="px-1.5 py-1.5">
-                            <input
-                              value={row.title}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, title: e.target.value } : r,
-                                  ),
-                                )
-                              }
-                              className="w-full h-8 rounded-sm bg-transparent hover:bg-raised focus:bg-raised border border-transparent focus:border-subtle px-1.5 text-[12px] font-medium"
-                            />
-                          </td>
-                          <td className="px-1.5 py-1.5">
-                            <textarea
-                              rows={2}
-                              value={row.topic}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, topic: e.target.value } : r,
-                                  ),
-                                )
-                              }
-                              className="w-full rounded-sm bg-transparent hover:bg-raised focus:bg-raised border border-transparent focus:border-subtle p-1.5 text-[12px] leading-snug resize-none"
-                            />
-                          </td>
-                          <td className="px-1.5 py-1.5">
-                            <select
-                              value={row.length}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, length: e.target.value } : r,
-                                  ),
-                                )
-                              }
-                              className="w-full h-8 rounded-sm bg-transparent hover:bg-raised focus:bg-raised border border-transparent focus:border-subtle px-1 text-[12px]"
-                            >
-                              {LENGTHS.map((l) => (
-                                <option key={l} value={l}>{l}</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-1.5 py-1.5">
-                            <select
-                              value={row.format}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, format: e.target.value } : r,
-                                  ),
-                                )
-                              }
-                              className="w-full h-8 rounded-sm bg-transparent hover:bg-raised focus:bg-raised border border-transparent focus:border-subtle px-1 text-[12px]"
-                            >
-                              {FORMATS.map((f) => (
-                                <option key={f} value={f}>{f}</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-1.5 py-1.5">
-                            <select
-                              value={row.artStyle}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, artStyle: e.target.value } : r,
-                                  ),
-                                )
-                              }
-                              className="w-full h-8 rounded-sm bg-transparent hover:bg-raised focus:bg-raised border border-transparent focus:border-subtle px-1 text-[12px]"
-                            >
-                              {ART_STYLES.map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-1.5 py-1.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={row.webSearch}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, webSearch: e.target.checked } : r,
-                                  ),
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-1.5 py-1.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={row.deepResearch}
-                              onChange={(e) =>
-                                setPlan((prev) =>
-                                  prev.map((r, i) =>
-                                    i === idx ? { ...r, deepResearch: e.target.checked } : r,
-                                  ),
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-1 py-1.5 text-center">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setPlan((prev) => prev.filter((_, i) => i !== idx))
-                              }
-                              className="w-6 h-6 rounded-md hover:bg-hover text-text-tertiary hover:text-text-primary inline-flex items-center justify-center"
-                              aria-label="Remove row"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody>
+                      {plan.map((row, idx) => {
+                        const cell = "border-b border-l border-subtle px-0 py-0 align-top";
+                        const input =
+                          "w-full h-9 bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 text-[12px] outline-none border-0";
+                        return (
+                          <tr key={row.id} className="group hover:bg-hover/30">
+                            <td className="border-b border-subtle px-2 py-0 text-[11px] text-text-tertiary font-mono tabular-nums">
+                              {String(idx + 1).padStart(2, "0")}
+                            </td>
+                            <td className={cell}>
+                              <input
+                                type="date"
+                                value={row.date}
+                                onChange={(e) =>
+                                  setPlan((prev) =>
+                                    prev.map((r, i) =>
+                                      i === idx ? { ...r, date: e.target.value } : r,
+                                    ),
+                                  )
+                                }
+                                className={cn(input, "font-mono tabular-nums")}
+                                style={{ ["--tw-ring-color" as string]: accent }}
+                              />
+                            </td>
+                            <td className={cell}>
+                              <input
+                                value={row.title}
+                                onChange={(e) =>
+                                  setPlan((prev) =>
+                                    prev.map((r, i) =>
+                                      i === idx ? { ...r, title: e.target.value } : r,
+                                    ),
+                                  )
+                                }
+                                className={cn(input, "font-medium")}
+                                style={{ ["--tw-ring-color" as string]: accent }}
+                              />
+                            </td>
+                            <td className={cell}>
+                              <textarea
+                                rows={2}
+                                value={row.topic}
+                                onChange={(e) =>
+                                  setPlan((prev) =>
+                                    prev.map((r, i) =>
+                                      i === idx ? { ...r, topic: e.target.value } : r,
+                                    ),
+                                  )
+                                }
+                                className="w-full min-h-[36px] bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 py-1.5 text-[12px] leading-snug resize-y outline-none border-0"
+                                style={{ ["--tw-ring-color" as string]: accent }}
+                              />
+                            </td>
+                            <td className={cell}>
+                              <select
+                                value={row.length}
+                                onChange={(e) =>
+                                  setPlan((prev) =>
+                                    prev.map((r, i) =>
+                                      i === idx ? { ...r, length: e.target.value } : r,
+                                    ),
+                                  )
+                                }
+                                className={input}
+                                style={{ ["--tw-ring-color" as string]: accent }}
+                              >
+                                {LENGTHS.map((l) => (
+                                  <option key={l} value={l}>{l}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className={cell}>
+                              <select
+                                value={row.format}
+                                onChange={(e) =>
+                                  setPlan((prev) =>
+                                    prev.map((r, i) =>
+                                      i === idx ? { ...r, format: e.target.value } : r,
+                                    ),
+                                  )
+                                }
+                                className={input}
+                                style={{ ["--tw-ring-color" as string]: accent }}
+                              >
+                                {FORMATS.map((f) => (
+                                  <option key={f} value={f}>{f}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className={cell}>
+                              <select
+                                value={row.artStyle}
+                                onChange={(e) =>
+                                  setPlan((prev) =>
+                                    prev.map((r, i) =>
+                                      i === idx ? { ...r, artStyle: e.target.value } : r,
+                                    ),
+                                  )
+                                }
+                                className={input}
+                                style={{ ["--tw-ring-color" as string]: accent }}
+                              >
+                                {ART_STYLES.map((s) => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className={cn(cell, "text-center")}>
+                              <div className="h-9 flex items-center justify-center">
+                                <input
+                                  type="checkbox"
+                                  checked={row.webSearch}
+                                  onChange={(e) =>
+                                    setPlan((prev) =>
+                                      prev.map((r, i) =>
+                                        i === idx ? { ...r, webSearch: e.target.checked } : r,
+                                      ),
+                                    )
+                                  }
+                                  style={{ accentColor: accent }}
+                                />
+                              </div>
+                            </td>
+                            <td className={cn(cell, "text-center")}>
+                              <div className="h-9 flex items-center justify-center">
+                                <input
+                                  type="checkbox"
+                                  checked={row.deepResearch}
+                                  onChange={(e) =>
+                                    setPlan((prev) =>
+                                      prev.map((r, i) =>
+                                        i === idx ? { ...r, deepResearch: e.target.checked } : r,
+                                      ),
+                                    )
+                                  }
+                                  style={{ accentColor: accent }}
+                                />
+                              </div>
+                            </td>
+                            <td className={cn(cell, "text-center")}>
+                              <div className="h-9 flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPlan((prev) => prev.filter((_, i) => i !== idx))
+                                  }
+                                  className="w-6 h-6 rounded-md opacity-0 group-hover:opacity-100 hover:bg-hover text-text-tertiary hover:text-text-primary inline-flex items-center justify-center"
+                                  aria-label="Remove row"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
