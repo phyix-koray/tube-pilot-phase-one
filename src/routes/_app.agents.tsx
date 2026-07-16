@@ -662,9 +662,14 @@ export function RunAgentWizard({
   const [topics, setTopics] = useState<ViralTopic[]>([]);
   const [pickedTopic, setPickedTopic] = useState<string | null>(null);
   const [seenTitles, setSeenTitles] = useState<string[]>([]);
-  const [iterations, setIterations] = useState<Record<string, string[]>>({});
+  const [iterations, setIterations] = useState<Record<string, ViralTopic[]>>({});
   const [iteratingId, setIteratingId] = useState<string | null>(null);
   const [pickedIdea, setPickedIdea] = useState<number | null>(null);
+
+  // Recurring video plan (daily/weekly) — auto-generated editable table
+  const [plan, setPlan] = useState<PlanRow[]>([]);
+  const [planGenerating, setPlanGenerating] = useState(false);
+  const [videoTheme, setVideoTheme] = useState("");
 
   const isRecurring = mode === "daily" || mode === "weekly";
 
