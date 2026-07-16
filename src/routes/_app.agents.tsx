@@ -686,16 +686,21 @@ export function RunAgentWizard({
         { key: "review", title: "Review" },
       ]
     : isVideo
-      ? [
-          { key: "channel", title: "Channel" },
-          { key: "schedule", title: "Schedule" },
-          { key: "niche", title: "Niche" },
-          { key: "viral", title: "Viral results" },
-          { key: "patterns", title: "AI analysis" },
-          { key: "ideas", title: "Original ideas" },
-          { key: "length", title: "Video length" },
-          { key: "review", title: "Review" },
-        ]
+      ? isRecurring
+        ? [
+            { key: "channel", title: "Channel" },
+            { key: "schedule", title: "Schedule" },
+            { key: "theme", title: "Theme" },
+            { key: "plan", title: "Content plan" },
+            { key: "review", title: "Review" },
+          ]
+        : [
+            { key: "channel", title: "Channel" },
+            { key: "schedule", title: "Schedule" },
+            { key: "topic", title: "Topic" },
+            { key: "length", title: "Video length" },
+            { key: "review", title: "Review" },
+          ]
       : [
           { key: "channel", title: "Channel" },
           { key: "inputs", title: "Inputs" },
