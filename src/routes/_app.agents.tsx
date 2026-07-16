@@ -2110,7 +2110,7 @@ function ThinkingBlock({
   kind,
 }: {
   accent: string;
-  kind: "viral" | "iterate" | "analysis";
+  kind: "viral" | "similar" | "analysis" | "plan";
 }) {
   const stepsByKind: Record<typeof kind, string[]> = {
     viral: [
@@ -2119,15 +2119,22 @@ function ThinkingBlock({
       "Scoring by view / subscriber ratio and daily velocity…",
       "Ranking the strongest viral hooks…",
     ],
-    iterate: [
-      "Reading the source hook…",
-      "Swapping protagonists and reframing the angle…",
-      "Drafting sibling titles…",
+    similar: [
+      "Reading the source hook and its metrics…",
+      "Searching sibling videos in the same cluster…",
+      "Scoring fresh candidates by velocity…",
+      "Drafting new topic cards…",
     ],
     analysis: [
       "Clustering titles by hook shape…",
       "Extracting recurring narrative patterns…",
-      "Summarising into 5 reusable formats…",
+      "Summarising into reusable formats…",
+    ],
+    plan: [
+      "Analysing your channel theme…",
+      "Distributing topics across the schedule…",
+      "Picking length, format, and art style per row…",
+      "Marking web-search and deep-research needs…",
     ],
   };
   const items = stepsByKind[kind];
