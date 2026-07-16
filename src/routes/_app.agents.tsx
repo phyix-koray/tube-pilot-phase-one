@@ -2056,16 +2056,13 @@ export function RunAgentWizard({
                           }
                           multiline
                         />
-                        <ReviewRow
-                          label="Content plan"
-                          value={
-                            plan.length === 0
-                              ? "No plan generated yet — open the Content plan step."
-                              : `${plan.length} scheduled ${mode === "weekly" ? "weeks" : "days"} · first: ${plan[0].date} — "${plan[0].title || "(untitled)"}"`
-                          }
-                          multiline
+                        <PlanReviewSummary
+                          plan={plan}
+                          mode={mode as "daily" | "weekly"}
+                          accent={accent}
                         />
                       </>
+
                     ) : (
                       <ReviewRow
                         label="Topic"
