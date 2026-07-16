@@ -774,7 +774,8 @@ export function RunAgentWizard({
   const currentKey = RUN_STEPS[Math.min(step, RUN_STEPS.length - 1)].key;
   useEffect(() => {
     if (currentKey !== "plan" || !isVideo) return;
-    if (plan.length > 0 || planGenerating) return;
+    if (planAutoGenRef.current) return;
+    planAutoGenRef.current = true;
     setPlanGenerating(true);
     const t = setTimeout(() => {
       setPlan(
@@ -787,7 +788,8 @@ export function RunAgentWizard({
       setPlanGenerating(false);
     }, 1800);
     return () => clearTimeout(t);
-  }, [currentKey, isVideo, plan.length, planGenerating, genre, mode]);
+  }, [currentKey, isVideo, genre, mode]);
+
 
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
