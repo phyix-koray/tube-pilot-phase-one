@@ -366,6 +366,47 @@ function formatNum(n: number): string {
   return String(n);
 }
 
+// Generate similar/iterated variations of a viral title (mock "AI"). Mirrors
+// the "iterate from this" pattern where the model expands one hook into
+// sibling angles the user can pick from.
+function mockIterateTitles(sourceTitle: string, genre: string): string[] {
+  const g = genre.trim().toLowerCase();
+  const src = sourceTitle;
+  // Genre-agnostic transforms: swap protagonist, invert framing, add stakes.
+  const swaps: Record<string, string[]> = {
+    OpenAI: ["Anthropic", "Google DeepMind", "Meta AI"],
+    Apple: ["Google", "Microsoft", "Samsung"],
+    Cursor: ["Windsurf", "Zed", "Copilot Workspace"],
+    BlackRock: ["Vanguard", "Bridgewater", "State Street"],
+    Yen: ["Yuan", "Lira", "Peso"],
+    Ottoman: ["Byzantine", "Mongol", "Habsburg"],
+    Roman: ["Persian", "Chinese", "Mayan"],
+    Netflix: ["Disney+", "HBO", "Prime Video"],
+  };
+  const found = Object.keys(swaps).find((k) => src.includes(k));
+  const variants: string[] = [];
+  if (found) {
+    swaps[found].forEach((alt) => variants.push(src.replace(found, alt)));
+  }
+  // Add framing variants regardless
+  variants.push(
+    src.startsWith("Why")
+      ? src.replace(/^Why/, "The Real Reason")
+      : `Why ${src}`,
+  );
+  variants.push(
+    src.includes("Nobody")
+      ? src.replace("Nobody", "Everyone")
+      : `${src} — And Why It Matters Now`,
+  );
+  if (g.includes("finance")) variants.push(`The Hidden Cost Behind ${src}`);
+  else if (g.includes("history")) variants.push(`The Untold Story of ${src}`);
+  else if (g.includes("tech")) variants.push(`What ${src} Actually Means for 2027`);
+  else variants.push(`Inside ${src}`);
+  // Dedupe & keep first 4
+  return Array.from(new Set(variants.filter((v) => v && v !== src))).slice(0, 4);
+}
+
 // Mirrors the "AI ANALİZ VE İÇERİK FİKİRLERİ" block from viral_finder.py output.
 export function mockCommonPatterns(genre: string): string[] {
   const g = genre.trim().toLowerCase();
@@ -531,6 +572,9 @@ export function RunAgentWizard({
   const [topics, setTopics] = useState<ViralTopic[]>([]);
   const [pickedTopic, setPickedTopic] = useState<string | null>(null);
   const [seenTitles, setSeenTitles] = useState<string[]>([]);
+  const [iterations, setIterations] = useState<Record<string, string[]>>({});
+  const [iteratingId, setIteratingId] = useState<string | null>(null);
+  const [pickedIdea, setPickedIdea] = useState<number | null>(null);
 
   const isRecurring = mode === "daily" || mode === "weekly";
 
@@ -550,7 +594,10 @@ export function RunAgentWizard({
       ? [
           { key: "channel", title: "Channel" },
           { key: "schedule", title: "Schedule" },
-          { key: "topic", title: isRecurring ? "Niche" : "Viral topic" },
+          { key: "niche", title: "Niche" },
+          { key: "viral", title: "Viral results" },
+          { key: "patterns", title: "AI analysis" },
+          { key: "ideas", title: "Original ideas" },
           { key: "length", title: "Video length" },
           { key: "review", title: "Review" },
         ]
@@ -590,10 +637,23 @@ export function RunAgentWizard({
   const runViralSearch = () => {
     setSearching(true);
     setPickedTopic(null);
+    setTopics([]);
+    setIterations({});
     setTimeout(() => {
       setTopics(mockViralTopics(genre, seenTitles));
       setSearching(false);
-    }, 1100);
+    }, 5000);
+  };
+
+  const iterateFrom = (t: ViralTopic) => {
+    setIteratingId(t.id);
+    setTimeout(() => {
+      setIterations((prev) => ({
+        ...prev,
+        [t.id]: mockIterateTitles(t.title, genre),
+      }));
+      setIteratingId(null);
+    }, 3000);
   };
 
   const pickedTopicObj = topics.find((t) => t.id === pickedTopic) ?? null;
@@ -883,12 +943,12 @@ export function RunAgentWizard({
                 </Field>
               )}
             </div>
-          ) : stepKey === "topic" && isVideo ? (
+          ) : stepKey === "niche" && isVideo ? (
             <div className="space-y-4">
               <div className="text-[12px] text-text-tertiary">
                 {isRecurring
                   ? "Set the niche once — every scheduled run will search YouTube for the day's top-trending videos in this niche. Topics you've already used are automatically skipped."
-                  : "Search YouTube for videos that are currently trending in your niche and pick one to base this run on."}
+                  : "Tell the agent what niche to hunt in. It will scan YouTube for videos currently over-performing their channel size."}
               </div>
               <Field label="Niche / genre">
                 <div className="flex gap-2">
@@ -905,7 +965,7 @@ export function RunAgentWizard({
                     className="inline-flex items-center gap-1.5 rounded-md bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 disabled:opacity-60 px-3 h-9 text-[13px] font-medium"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    {searching ? "Searching…" : "Find viral topics"}
+                    {searching ? "Searching…" : topics.length > 0 ? "Search again" : "Find viral topics"}
                   </button>
                 </div>
               </Field>
@@ -916,149 +976,276 @@ export function RunAgentWizard({
                 </div>
               )}
 
-              {topics.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-[11px] uppercase tracking-wide text-text-tertiary">
-                    {isRecurring
-                      ? "Preview — top viral results right now"
-                      : "Pick one to run"}
+              {searching && <ThinkingBlock accent={accent} kind="viral" />}
+
+              {!searching && topics.length > 0 && (
+                <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
+                    <CheckCircle2 className="w-3 h-3" style={{ color: accent }} />
+                    Search complete
                   </div>
-                  {topics.map((t) => {
-                    const active = pickedTopic === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() =>
-                          isRecurring
-                            ? undefined
-                            : setPickedTopic(active ? null : t.id)
-                        }
-                        className={cn(
-                          "w-full text-left rounded-lg p-3",
-                          active ? "bg-raised" : "bg-raised/40 hover:bg-raised",
-                          isRecurring && "cursor-default",
-                        )}
-                        style={
-                          active
-                            ? { border: `2px solid ${accent}` }
-                            : { border: "1px solid var(--tp-subtle)" }
-                        }
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="text-[13px] font-medium truncate">
-                              {t.title}
-                            </div>
-                            <div className="text-[11px] text-text-tertiary mt-0.5">
-                              {t.channel} · {t.publishedDaysAgo}d ago
-                            </div>
-                          </div>
-                          <div
-                            className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold"
-                            style={{ backgroundColor: accent, color: "#0a0a0b" }}
-                          >
-                            {t.score}
-                          </div>
-                        </div>
-                        <div className="mt-2 flex items-center gap-3 text-[11px] text-text-tertiary">
-                          <span>{formatNum(t.views)} views</span>
-                          <span>{formatNum(t.subs)} subs</span>
-                          <span>ratio {t.ratio}×</span>
-                          <span>{formatNum(t.velocity)}/day</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                  {!isRecurring && pickedTopicObj && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSeenTitles((s) =>
-                          Array.from(new Set([...s, pickedTopicObj.title])),
-                        );
-                      }}
-                      className="text-[11px] text-text-tertiary hover:text-text-primary underline"
-                    >
-                      Mark "{pickedTopicObj.title}" as used (will be skipped next time)
-                    </button>
-                  )}
+                  <div className="text-[13px] text-text-secondary">
+                    Found <b>{topics.length}</b> trending topic{topics.length === 1 ? "" : "s"} in <b>{genre}</b>. Continue to the next step to browse them, iterate similar hooks, or use one of the 5 original ideas the agent drafted.
+                  </div>
+                </div>
+              )}
+
+              {!searching && topics.length === 0 && (
+                <div className="rounded-md bg-raised/40 border border-dashed border-subtle p-4 text-center text-[12px] text-text-tertiary">
+                  Enter a niche and click <b>Find viral topics</b>. The agent runs a YouTube search filtered by view velocity and view/subscriber ratio.
+                </div>
+              )}
+            </div>
+          ) : stepKey === "viral" && isVideo ? (
+            <div className="space-y-4">
+              <div className="text-[12px] text-text-tertiary">
+                {isRecurring
+                  ? "Preview of the top viral results the agent found right now. On scheduled runs it will re-search and skip anything already used."
+                  : "Pick one of these viral hooks to run — or click Iterate similar to have the agent draft variations of a title you like."}
+              </div>
+
+              {topics.length === 0 && !searching && (
+                <div className="rounded-md bg-raised/40 border border-dashed border-subtle p-4 text-center text-[12px] text-text-tertiary">
+                  No search run yet. Go back to the Niche step and click <b>Find viral topics</b>.
                 </div>
               )}
 
               {topics.length > 0 && (
-                <>
-                  <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-2">
-                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
-                      <Sparkles className="w-3 h-3" />
-                      AI analysis — common patterns
-                    </div>
-                    <ol className="space-y-1.5 text-[12.5px] text-text-secondary list-decimal pl-4">
-                      {mockCommonPatterns(genre).map((p, i) => (
-                        <li key={i}>{p}</li>
-                      ))}
-                    </ol>
-                  </div>
-
-                  <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-2.5">
-                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
-                      <Sparkles className="w-3 h-3" />
-                      5 original video ideas
-                    </div>
-                    <div className="space-y-2">
-                      {mockSuggestedIdeas(genre).map((idea, i) => (
-                        <div
-                          key={i}
-                          className="rounded-md bg-surface border border-subtle p-2.5"
+                <div className="space-y-2">
+                  {topics.map((t) => {
+                    const active = pickedTopic === t.id;
+                    const iters = iterations[t.id] ?? [];
+                    const isIterating = iteratingId === t.id;
+                    return (
+                      <div key={t.id} className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPickedTopic(active ? null : t.id);
+                            setPickedIdea(null);
+                          }}
+                          className={cn(
+                            "w-full text-left rounded-lg p-3",
+                            active ? "bg-raised" : "bg-raised/40 hover:bg-raised",
+                          )}
+                          style={
+                            active
+                              ? { border: `2px solid ${accent}` }
+                              : { border: "1px solid var(--tp-subtle)" }
+                          }
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <div className="text-[12.5px] font-semibold min-w-0">
-                              {i + 1}. {idea.title}
+                            <div className="min-w-0">
+                              <div className="text-[13px] font-medium truncate">
+                                {t.title}
+                              </div>
+                              <div className="text-[11px] text-text-tertiary mt-0.5">
+                                {t.channel} · {t.publishedDaysAgo}d ago
+                              </div>
                             </div>
-                            {!isRecurring && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const synthetic: ViralTopic = {
-                                    id: `idea-${i}`,
-                                    title: idea.title,
-                                    channel: "AI original idea",
-                                    views: 0,
-                                    subs: 0,
-                                    ratio: 0,
-                                    velocity: 0,
-                                    score: 0,
-                                    publishedDaysAgo: 0,
-                                  };
-                                  setTopics((prev) =>
-                                    prev.find((t) => t.id === synthetic.id)
-                                      ? prev
-                                      : [...prev, synthetic],
-                                  );
-                                  setPickedTopic(synthetic.id);
-                                }}
-                                className="shrink-0 rounded-md border border-subtle hover:bg-hover px-2 h-6 text-[11px] font-medium"
-                              >
-                                Use this idea
-                              </button>
-                            )}
+                            <div
+                              className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                              style={{ backgroundColor: accent, color: "#0a0a0b" }}
+                            >
+                              {t.score}
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center gap-3 text-[11px] text-text-tertiary">
+                            <span>{formatNum(t.views)} views</span>
+                            <span>{formatNum(t.subs)} subs</span>
+                            <span>ratio {t.ratio}×</span>
+                            <span>{formatNum(t.velocity)}/day</span>
+                          </div>
+                          <div className="mt-2.5 flex items-center justify-between gap-2">
+                            <span className="text-[11px] text-text-tertiary">
+                              {active ? "Selected as topic" : "Click card to select"}
+                            </span>
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isIterating) iterateFrom(t);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.stopPropagation();
+                                  if (!isIterating) iterateFrom(t);
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 rounded-md border border-subtle hover:bg-hover px-2 h-7 text-[11px] font-medium cursor-pointer"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              {isIterating ? "Iterating…" : iters.length > 0 ? "Iterate again" : "Iterate similar"}
+                            </span>
+                          </div>
+                        </button>
+
+                        {isIterating && (
+                          <div className="ml-4">
+                            <ThinkingBlock accent={accent} kind="iterate" />
+                          </div>
+                        )}
+
+                        {iters.length > 0 && (
+                          <div className="ml-4 space-y-1.5 border-l-2 pl-3" style={{ borderColor: accent }}>
+                            <div className="text-[10px] uppercase tracking-wide text-text-tertiary">
+                              Similar hooks
+                            </div>
+                            {iters.map((title, i) => {
+                              const id = `${t.id}-iter-${i}`;
+                              const iactive = pickedTopic === id;
+                              return (
+                                <button
+                                  key={id}
+                                  type="button"
+                                  onClick={() => {
+                                    const synthetic: ViralTopic = {
+                                      id,
+                                      title,
+                                      channel: `iterated from ${t.channel}`,
+                                      views: 0,
+                                      subs: 0,
+                                      ratio: 0,
+                                      velocity: 0,
+                                      score: 0,
+                                      publishedDaysAgo: 0,
+                                    };
+                                    setTopics((prev) =>
+                                      prev.find((x) => x.id === id) ? prev : [...prev, synthetic],
+                                    );
+                                    setPickedTopic(iactive ? null : id);
+                                    setPickedIdea(null);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left rounded-md p-2 text-[12.5px]",
+                                    iactive ? "bg-raised" : "bg-raised/40 hover:bg-raised",
+                                  )}
+                                  style={
+                                    iactive
+                                      ? { border: `2px solid ${accent}` }
+                                      : { border: "1px solid var(--tp-subtle)" }
+                                  }
+                                >
+                                  {title}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {!isRecurring && pickedTopicObj && (
+                    <div className="rounded-md bg-raised/60 border border-subtle p-2.5 text-[11px] text-text-secondary">
+                      Selected: <b>{pickedTopicObj.title}</b>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : stepKey === "patterns" && isVideo ? (
+            <div className="space-y-4">
+              <div className="text-[12px] text-text-tertiary">
+                What the agent noticed while scanning these viral videos — the recurring hook shapes you can borrow from.
+              </div>
+              {searching || topics.length === 0 ? (
+                <ThinkingBlock accent={accent} kind="analysis" />
+              ) : (
+                <div className="rounded-lg border border-subtle bg-raised/40 p-4 space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
+                    <Sparkles className="w-3 h-3" />
+                    AI analysis — common patterns in {genre}
+                  </div>
+                  <ol className="space-y-2 text-[13px] text-text-secondary list-decimal pl-4">
+                    {mockCommonPatterns(genre).map((p, i) => (
+                      <li key={i}>{p}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+          ) : stepKey === "ideas" && isVideo ? (
+            <div className="space-y-4">
+              <div className="text-[12px] text-text-tertiary">
+                {isRecurring
+                  ? "5 original angles the agent drafted from the patterns above — informational, since recurring runs re-generate ideas each cycle."
+                  : "5 fully original angles synthesised from the patterns above. Pick one to use as this run's topic, or keep your viral pick from the previous step."}
+              </div>
+              {topics.length === 0 ? (
+                <div className="rounded-md bg-raised/40 border border-dashed border-subtle p-4 text-center text-[12px] text-text-tertiary">
+                  Run a niche search first to unlock original ideas.
+                </div>
+              ) : (
+                <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
+                    <Sparkles className="w-3 h-3" />
+                    5 original video ideas
+                  </div>
+                  <div className="space-y-2">
+                    {mockSuggestedIdeas(genre).map((idea, i) => {
+                      const iactive = pickedIdea === i;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            if (iactive) {
+                              setPickedIdea(null);
+                              setPickedTopic(null);
+                              return;
+                            }
+                            const id = `idea-${i}`;
+                            const synthetic: ViralTopic = {
+                              id,
+                              title: idea.title,
+                              channel: "AI original idea",
+                              views: 0,
+                              subs: 0,
+                              ratio: 0,
+                              velocity: 0,
+                              score: 0,
+                              publishedDaysAgo: 0,
+                            };
+                            setTopics((prev) =>
+                              prev.find((t) => t.id === id) ? prev : [...prev, synthetic],
+                            );
+                            setPickedIdea(i);
+                            setPickedTopic(id);
+                          }}
+                          className={cn(
+                            "w-full text-left rounded-md p-3",
+                            iactive ? "bg-raised" : "bg-surface hover:bg-raised",
+                          )}
+                          style={
+                            iactive
+                              ? { border: `2px solid ${accent}` }
+                              : { border: "1px solid var(--tp-subtle)" }
+                          }
+                        >
+                          <div className="text-[13px] font-semibold">
+                            {i + 1}. {idea.title}
                           </div>
                           <div className="mt-1 text-[12px] text-text-secondary">
                             {idea.pitch}
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                          <div className="mt-2 text-[11px] text-text-tertiary">
+                            {iactive ? "Selected as topic" : "Click to use this idea"}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                </>
-              )}
-
-              {topics.length === 0 && !searching && (
-                <div className="rounded-md bg-raised/40 border border-dashed border-subtle p-4 text-center text-[12px] text-text-tertiary">
-                  Enter a niche and click <b>Find viral topics</b>. The AI runs a YouTube search filtered by view velocity and view/subscriber ratio (mirrors the viral_finder.py pipeline).
+                  {!isRecurring && pickedTopicObj && (
+                    <div className="rounded-md bg-raised/60 border border-subtle p-2.5 text-[11px] text-text-secondary">
+                      Current topic: <b>{pickedTopicObj.title}</b>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+
           ) : stepKey === "length" && (isMusic || isVideo) ? (
             <div className="space-y-3">
               <div className="text-[12px] text-text-tertiary">
@@ -1535,6 +1722,76 @@ export function RunAgentWizard({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function ThinkingBlock({
+  accent,
+  kind,
+}: {
+  accent: string;
+  kind: "viral" | "iterate" | "analysis";
+}) {
+  const stepsByKind: Record<typeof kind, string[]> = {
+    viral: [
+      "Querying YouTube Data API for the niche…",
+      "Filtering for videos published in the last 14 days…",
+      "Scoring by view / subscriber ratio and daily velocity…",
+      "Ranking the strongest viral hooks…",
+    ],
+    iterate: [
+      "Reading the source hook…",
+      "Swapping protagonists and reframing the angle…",
+      "Drafting sibling titles…",
+    ],
+    analysis: [
+      "Clustering titles by hook shape…",
+      "Extracting recurring narrative patterns…",
+      "Summarising into 5 reusable formats…",
+    ],
+  };
+  const items = stepsByKind[kind];
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 900);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div
+      className="rounded-lg bg-raised/60 p-4 space-y-2.5"
+      style={{ border: `1px dashed ${accent}` }}
+    >
+      <div className="flex items-center gap-2 text-[13px] font-medium">
+        <span
+          className="inline-block w-3.5 h-3.5 rounded-full animate-pulse"
+          style={{ backgroundColor: accent }}
+        />
+        <span className="text-text-primary">Agent thinking…</span>
+        <span className="text-text-tertiary text-[11px]">
+          {".".repeat((tick % 3) + 1)}
+        </span>
+      </div>
+      <ul className="space-y-1.5">
+        {items.map((s, i) => {
+          const active = i <= tick % (items.length + 1);
+          return (
+            <li
+              key={i}
+              className={cn(
+                "flex items-center gap-2 text-[12px] transition-opacity",
+                active ? "opacity-100" : "opacity-40",
+              )}
+            >
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: active ? accent : "var(--tp-subtle)" }}
+              />
+              <span className="text-text-secondary">{s}</span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
