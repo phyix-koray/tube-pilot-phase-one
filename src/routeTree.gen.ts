@@ -20,6 +20,7 @@ import { Route as AppAgentsRouteImport } from './routes/_app.agents'
 import { Route as AppVideosIndexRouteImport } from './routes/_app.videos.index'
 import { Route as AppVideosVideoIdRouteImport } from './routes/_app.videos.$videoId'
 import { Route as AppSkillsSkillIdRouteImport } from './routes/_app.skills.$skillId'
+import { Route as AppRunAgentIdRouteImport } from './routes/_app.run.$agentId'
 import { Route as AppAgentsAgentIdRouteImport } from './routes/_app.agents.$agentId'
 
 const AppRoute = AppRouteImport.update({
@@ -76,6 +77,11 @@ const AppSkillsSkillIdRoute = AppSkillsSkillIdRouteImport.update({
   path: '/$skillId',
   getParentRoute: () => AppSkillsRoute,
 } as any)
+const AppRunAgentIdRoute = AppRunAgentIdRouteImport.update({
+  id: '/run/$agentId',
+  path: '/run/$agentId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAgentsAgentIdRoute = AppAgentsAgentIdRouteImport.update({
   id: '/$agentId',
   path: '/$agentId',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/videos': typeof AppVideosRouteWithChildren
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
+  '/run/$agentId': typeof AppRunAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/videos/$videoId': typeof AppVideosVideoIdRoute
   '/videos/': typeof AppVideosIndexRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/skills': typeof AppSkillsRouteWithChildren
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
+  '/run/$agentId': typeof AppRunAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/videos/$videoId': typeof AppVideosVideoIdRoute
   '/videos': typeof AppVideosIndexRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/_app/videos': typeof AppVideosRouteWithChildren
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/_app/agents/$agentId': typeof AppAgentsAgentIdRoute
+  '/_app/run/$agentId': typeof AppRunAgentIdRoute
   '/_app/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/_app/videos/$videoId': typeof AppVideosVideoIdRoute
   '/_app/videos/': typeof AppVideosIndexRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/editor/$videoId'
     | '/agents/$agentId'
+    | '/run/$agentId'
     | '/skills/$skillId'
     | '/videos/$videoId'
     | '/videos/'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/skills'
     | '/editor/$videoId'
     | '/agents/$agentId'
+    | '/run/$agentId'
     | '/skills/$skillId'
     | '/videos/$videoId'
     | '/videos'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/_app/videos'
     | '/editor/$videoId'
     | '/_app/agents/$agentId'
+    | '/_app/run/$agentId'
     | '/_app/skills/$skillId'
     | '/_app/videos/$videoId'
     | '/_app/videos/'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSkillsSkillIdRouteImport
       parentRoute: typeof AppSkillsRoute
     }
+    '/_app/run/$agentId': {
+      id: '/_app/run/$agentId'
+      path: '/run/$agentId'
+      fullPath: '/run/$agentId'
+      preLoaderRoute: typeof AppRunAgentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/agents/$agentId': {
       id: '/_app/agents/$agentId'
       path: '/$agentId'
@@ -303,6 +322,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppSkillsRoute: typeof AppSkillsRouteWithChildren
   AppVideosRoute: typeof AppVideosRouteWithChildren
+  AppRunAgentIdRoute: typeof AppRunAgentIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -311,6 +331,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppSkillsRoute: AppSkillsRouteWithChildren,
   AppVideosRoute: AppVideosRouteWithChildren,
+  AppRunAgentIdRoute: AppRunAgentIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -323,13 +344,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

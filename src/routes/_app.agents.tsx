@@ -96,9 +96,23 @@ function AgentsPage() {
           Your agents
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((w) => (
-            <AgentCard key={w.id} w={w} onUse={() => setRunTarget(w)} />
-          ))}
+          {filtered.map((w) => {
+            const isVideoAgent =
+              w.id === "ai-video-generator" || w.id === "stock-video-generator";
+            return (
+              <AgentCard
+                key={w.id}
+                w={w}
+                onUse={() => {
+                  if (isVideoAgent && typeof window !== "undefined") {
+                    window.open(`/run/${w.id}`, "_blank", "noopener");
+                  } else {
+                    setRunTarget(w);
+                  }
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -352,14 +366,96 @@ function formatNum(n: number): string {
   return String(n);
 }
 
-function RunAgentWizard({
+// Mirrors the "AI ANALİZ VE İÇERİK FİKİRLERİ" block from viral_finder.py output.
+export function mockCommonPatterns(genre: string): string[] {
+  const g = genre.trim().toLowerCase();
+  if (g.includes("finance") || g.includes("money") || g.includes("altın") || g.includes("ekonomi")) {
+    return [
+      "Curiosity / puzzle-style hooks that pull the viewer into a 'guess or spot the trick' interaction (hidden asset, doubling-money question).",
+      "Timely, practical finance explainers (gold prices, credit vs. loan comparisons, breaking bank news) that ride real-time demand.",
+      "'Hidden money / savings' how-to guides on obscure topics (deposit refunds, stealth taxes, poverty premiums).",
+      "Real-case storytelling that extracts a broader financial lesson (invoice error saga, YouTuber income teardown).",
+      "Big-number / mathematical face-offs used as attention hooks (10M lump sum vs. doubling penny).",
+    ];
+  }
+  if (g.includes("history")) {
+    return [
+      "Forgotten-figure biographies framed as 'the person history erased'.",
+      "Turning-point retellings that reframe a familiar event through a single overlooked decision.",
+      "Artifact / document deep-dives where the object anchors the entire narrative.",
+      "Empire-collapse explainers that map ancient patterns onto modern anxieties.",
+      "Myth-busting takes that debunk widely-repeated historical 'facts'.",
+    ];
+  }
+  if (g.includes("tech") || g.includes("ai")) {
+    return [
+      "'Quiet pivot' narratives about a big-tech move nobody noticed yet.",
+      "Contrarian debunks of the current hype cycle (shortage myths, overrated tools).",
+      "One-person / solo-founder success dissections with concrete revenue numbers.",
+      "Under-the-hood breakdowns of a product's real moat vs. its marketing.",
+      "Predictive 'next 12 months' framings tied to a single leading indicator.",
+    ];
+  }
+  return [
+    "Puzzle / 'can you spot it' hooks that promise interactive payoff.",
+    "Real-time / newsy explainers riding today's most searched question.",
+    "Hidden-knowledge how-tos on things everyone should know but doesn't.",
+    "Single-case narrative arcs that generalise into a bigger lesson.",
+    "High-contrast comparisons using extreme numbers or scenarios.",
+  ];
+}
+
+// Mirrors the "Önerilen 5 özgün video fikri" block from viral_finder.py output.
+export function mockSuggestedIdeas(
+  genre: string,
+): { title: string; pitch: string }[] {
+  const g = genre.trim().toLowerCase();
+  if (g.includes("finance") || g.includes("money") || g.includes("altın") || g.includes("ekonomi")) {
+    return [
+      { title: "Bu Faturadaki Gizli Hatayı Bulabilir misin? 🧾", pitch: "Interactive puzzle video inviting viewers to spot a hidden arithmetic error on a real utility bill — payoff explains the exact scam pattern behind it." },
+      { title: "Evdeki Kullanılmayan Eşyalardan Ayda 5.000 TL Çıkarma Yöntemleri", pitch: "Practical teardown of five under-used household items and the exact resale / rental channels that turn them into recurring monthly income." },
+      { title: "10 TL ile Başlayan Milyoner Deneyi — 30 Günde Ne Oldu?", pitch: "Daily-log style challenge that doubles a tiny starting stake through legal micro-arbitrage and reveals where the math actually breaks." },
+      { title: "Bankanızın Size Söylemediği 7 Gizli Ücret", pitch: "Contract-line deep dive with real screenshots, showing which fees are negotiable and the exact phrasing that gets them refunded." },
+      { title: "1 Milyon Aboneli Finans YouTuber'ı Aslında Ne Kadar Kazanıyor?", pitch: "Reverse-engineered income teardown using public CPM data — separates sponsor income, AdSense, and course sales into a single realistic P&L." },
+    ];
+  }
+  if (g.includes("history")) {
+    return [
+      { title: "The Emperor Who Faked His Own Death — And What He Did Next", pitch: "Investigates the primary sources behind the disappearance and reconstructs a plausible second life from tax records." },
+      { title: "The Library That Held Human Knowledge — And the One Book That Survived", pitch: "Traces a single manuscript from Alexandria to a modern shelf, using it as a lens on what civilisations lose in a single fire." },
+      { title: "The 5-Minute Decision That Redrew Europe", pitch: "Frames a single Ottoman envoy's dispatch as the pivot point most European histories skip over entirely." },
+      { title: "History's Most Successful Con Artist You've Never Heard Of", pitch: "Reconstructs the paper trail of a 19th-century impostor who fooled three governments and left almost no photographs." },
+      { title: "The Ship That Vanished With 600 Souls — Solved 200 Years Later", pitch: "Uses recent sonar data to lay a modern investigation on top of the contemporary newspaper record, ending with a defensible theory." },
+    ];
+  }
+  if (g.includes("tech") || g.includes("ai")) {
+    return [
+      { title: "OpenAI's Silent Pivot Nobody Noticed", pitch: "Reads job postings, patent filings, and API changelogs to reconstruct the product direction the keynote never mentioned." },
+      { title: "The One-Person Billion-Dollar Company Playbook", pitch: "Breaks down the exact stack, pricing, and distribution loop behind a solo founder crossing $10M ARR in 14 months." },
+      { title: "Why Every YC Startup Is Suddenly Copying Cursor", pitch: "Maps the last two batches to show the UX primitives Cursor turned into table stakes — and the one nobody is copying yet." },
+      { title: "The GPU Shortage Is a Lie — Here's the Real Bottleneck", pitch: "Walks through supply data to show where capacity is actually stuck, and which downstream companies quietly benefit." },
+      { title: "The Real Reason Apple Killed the Car (It Isn't What They Said)", pitch: "Cross-references SEC filings, hiring freezes, and Vision Pro roadmap leaks to reconstruct the internal trade-off." },
+    ];
+  }
+  return [
+    { title: "The Story Behind the Photo That Broke the Internet", pitch: "Traces a viral image back to its source and unpacks who actually profited from its spread." },
+    { title: "The Town That Voted to Delete Itself", pitch: "Ground-level report from a community that legally dissolved — what triggered it and what came next." },
+    { title: "The Man Who Predicted 2026 — In 1998", pitch: "Reads a forgotten futurist essay against today's headlines and scores which calls landed." },
+    { title: "The Netflix Show Netflix Doesn't Want You to Find", pitch: "Investigates why a well-reviewed series was quietly removed from search — and how to still watch it legally." },
+    { title: "The Country Paying People to Move There", pitch: "On-the-ground breakdown of a real relocation programme, including the fine print nobody mentions." },
+  ];
+}
+
+export function RunAgentWizard({
   agent,
   onClose,
   onDone,
+  variant = "modal",
 }: {
   agent: Workflow;
-  onClose: () => void;
+  onClose?: () => void;
   onDone: (message: string) => void;
+  variant?: "modal" | "page";
 }) {
   const navigate = useNavigate();
   const accent = agent.accent ?? "var(--tp-subtle)";
@@ -524,22 +620,36 @@ function RunAgentWizard({
   const stepKey = RUN_STEPS[clampedStep].key;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-      <button
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-      />
+    <div
+      className={
+        variant === "page"
+          ? "w-full"
+          : "fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      }
+    >
+      {variant === "modal" && (
+        <button
+          aria-label="Close"
+          onClick={onClose}
+          className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        />
+      )}
       <div
-        className="relative w-full max-w-2xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
+        className={
+          variant === "page"
+            ? "relative w-full max-w-3xl mx-auto rounded-2xl bg-surface card-shadow overflow-hidden flex flex-col"
+            : "relative w-full max-w-2xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
+        }
         style={{ border: `2px solid ${accent}` }}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-8 h-8 rounded-md hover:bg-hover flex items-center justify-center text-text-secondary z-10"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        {variant === "modal" && (
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 rounded-md hover:bg-hover flex items-center justify-center text-text-secondary z-10"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Header */}
         <div className="flex items-center gap-3 px-5 pt-5">
@@ -874,6 +984,73 @@ function RunAgentWizard({
                     </button>
                   )}
                 </div>
+              )}
+
+              {topics.length > 0 && (
+                <>
+                  <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
+                      <Sparkles className="w-3 h-3" />
+                      AI analysis — common patterns
+                    </div>
+                    <ol className="space-y-1.5 text-[12.5px] text-text-secondary list-decimal pl-4">
+                      {mockCommonPatterns(genre).map((p, i) => (
+                        <li key={i}>{p}</li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
+                      <Sparkles className="w-3 h-3" />
+                      5 original video ideas
+                    </div>
+                    <div className="space-y-2">
+                      {mockSuggestedIdeas(genre).map((idea, i) => (
+                        <div
+                          key={i}
+                          className="rounded-md bg-surface border border-subtle p-2.5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="text-[12.5px] font-semibold min-w-0">
+                              {i + 1}. {idea.title}
+                            </div>
+                            {!isRecurring && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const synthetic: ViralTopic = {
+                                    id: `idea-${i}`,
+                                    title: idea.title,
+                                    channel: "AI original idea",
+                                    views: 0,
+                                    subs: 0,
+                                    ratio: 0,
+                                    velocity: 0,
+                                    score: 0,
+                                    publishedDaysAgo: 0,
+                                  };
+                                  setTopics((prev) =>
+                                    prev.find((t) => t.id === synthetic.id)
+                                      ? prev
+                                      : [...prev, synthetic],
+                                  );
+                                  setPickedTopic(synthetic.id);
+                                }}
+                                className="shrink-0 rounded-md border border-subtle hover:bg-hover px-2 h-6 text-[11px] font-medium"
+                              >
+                                Use this idea
+                              </button>
+                            )}
+                          </div>
+                          <div className="mt-1 text-[12px] text-text-secondary">
+                            {idea.pitch}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
 
               {topics.length === 0 && !searching && (
