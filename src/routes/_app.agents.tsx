@@ -10,7 +10,7 @@ import {
   Settings2,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   mockChannels,
   mockVideos,
@@ -669,6 +669,8 @@ export function RunAgentWizard({
   // Recurring video plan (daily/weekly) — auto-generated editable table
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
+  const planAutoGenRef = useRef(false);
+
   const [videoTheme, setVideoTheme] = useState("");
 
   const isRecurring = mode === "daily" || mode === "weekly";
@@ -772,7 +774,8 @@ export function RunAgentWizard({
   const currentKey = RUN_STEPS[Math.min(step, RUN_STEPS.length - 1)].key;
   useEffect(() => {
     if (currentKey !== "plan" || !isVideo) return;
-    if (plan.length > 0 || planGenerating) return;
+    if (planAutoGenRef.current) return;
+    planAutoGenRef.current = true;
     setPlanGenerating(true);
     const t = setTimeout(() => {
       setPlan(
@@ -785,7 +788,8 @@ export function RunAgentWizard({
       setPlanGenerating(false);
     }, 1800);
     return () => clearTimeout(t);
-  }, [currentKey, isVideo, plan.length, planGenerating, genre, mode]);
+  }, [currentKey, isVideo, genre, mode]);
+
 
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
