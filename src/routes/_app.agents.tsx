@@ -352,6 +352,86 @@ function formatNum(n: number): string {
   return String(n);
 }
 
+// Mirrors the "AI ANALİZ VE İÇERİK FİKİRLERİ" block from viral_finder.py output.
+export function mockCommonPatterns(genre: string): string[] {
+  const g = genre.trim().toLowerCase();
+  if (g.includes("finance") || g.includes("money") || g.includes("altın") || g.includes("ekonomi")) {
+    return [
+      "Curiosity / puzzle-style hooks that pull the viewer into a 'guess or spot the trick' interaction (hidden asset, doubling-money question).",
+      "Timely, practical finance explainers (gold prices, credit vs. loan comparisons, breaking bank news) that ride real-time demand.",
+      "'Hidden money / savings' how-to guides on obscure topics (deposit refunds, stealth taxes, poverty premiums).",
+      "Real-case storytelling that extracts a broader financial lesson (invoice error saga, YouTuber income teardown).",
+      "Big-number / mathematical face-offs used as attention hooks (10M lump sum vs. doubling penny).",
+    ];
+  }
+  if (g.includes("history")) {
+    return [
+      "Forgotten-figure biographies framed as 'the person history erased'.",
+      "Turning-point retellings that reframe a familiar event through a single overlooked decision.",
+      "Artifact / document deep-dives where the object anchors the entire narrative.",
+      "Empire-collapse explainers that map ancient patterns onto modern anxieties.",
+      "Myth-busting takes that debunk widely-repeated historical 'facts'.",
+    ];
+  }
+  if (g.includes("tech") || g.includes("ai")) {
+    return [
+      "'Quiet pivot' narratives about a big-tech move nobody noticed yet.",
+      "Contrarian debunks of the current hype cycle (shortage myths, overrated tools).",
+      "One-person / solo-founder success dissections with concrete revenue numbers.",
+      "Under-the-hood breakdowns of a product's real moat vs. its marketing.",
+      "Predictive 'next 12 months' framings tied to a single leading indicator.",
+    ];
+  }
+  return [
+    "Puzzle / 'can you spot it' hooks that promise interactive payoff.",
+    "Real-time / newsy explainers riding today's most searched question.",
+    "Hidden-knowledge how-tos on things everyone should know but doesn't.",
+    "Single-case narrative arcs that generalise into a bigger lesson.",
+    "High-contrast comparisons using extreme numbers or scenarios.",
+  ];
+}
+
+// Mirrors the "Önerilen 5 özgün video fikri" block from viral_finder.py output.
+export function mockSuggestedIdeas(
+  genre: string,
+): { title: string; pitch: string }[] {
+  const g = genre.trim().toLowerCase();
+  if (g.includes("finance") || g.includes("money") || g.includes("altın") || g.includes("ekonomi")) {
+    return [
+      { title: "Bu Faturadaki Gizli Hatayı Bulabilir misin? 🧾", pitch: "Interactive puzzle video inviting viewers to spot a hidden arithmetic error on a real utility bill — payoff explains the exact scam pattern behind it." },
+      { title: "Evdeki Kullanılmayan Eşyalardan Ayda 5.000 TL Çıkarma Yöntemleri", pitch: "Practical teardown of five under-used household items and the exact resale / rental channels that turn them into recurring monthly income." },
+      { title: "10 TL ile Başlayan Milyoner Deneyi — 30 Günde Ne Oldu?", pitch: "Daily-log style challenge that doubles a tiny starting stake through legal micro-arbitrage and reveals where the math actually breaks." },
+      { title: "Bankanızın Size Söylemediği 7 Gizli Ücret", pitch: "Contract-line deep dive with real screenshots, showing which fees are negotiable and the exact phrasing that gets them refunded." },
+      { title: "1 Milyon Aboneli Finans YouTuber'ı Aslında Ne Kadar Kazanıyor?", pitch: "Reverse-engineered income teardown using public CPM data — separates sponsor income, AdSense, and course sales into a single realistic P&L." },
+    ];
+  }
+  if (g.includes("history")) {
+    return [
+      { title: "The Emperor Who Faked His Own Death — And What He Did Next", pitch: "Investigates the primary sources behind the disappearance and reconstructs a plausible second life from tax records." },
+      { title: "The Library That Held Human Knowledge — And the One Book That Survived", pitch: "Traces a single manuscript from Alexandria to a modern shelf, using it as a lens on what civilisations lose in a single fire." },
+      { title: "The 5-Minute Decision That Redrew Europe", pitch: "Frames a single Ottoman envoy's dispatch as the pivot point most European histories skip over entirely." },
+      { title: "History's Most Successful Con Artist You've Never Heard Of", pitch: "Reconstructs the paper trail of a 19th-century impostor who fooled three governments and left almost no photographs." },
+      { title: "The Ship That Vanished With 600 Souls — Solved 200 Years Later", pitch: "Uses recent sonar data to lay a modern investigation on top of the contemporary newspaper record, ending with a defensible theory." },
+    ];
+  }
+  if (g.includes("tech") || g.includes("ai")) {
+    return [
+      { title: "OpenAI's Silent Pivot Nobody Noticed", pitch: "Reads job postings, patent filings, and API changelogs to reconstruct the product direction the keynote never mentioned." },
+      { title: "The One-Person Billion-Dollar Company Playbook", pitch: "Breaks down the exact stack, pricing, and distribution loop behind a solo founder crossing $10M ARR in 14 months." },
+      { title: "Why Every YC Startup Is Suddenly Copying Cursor", pitch: "Maps the last two batches to show the UX primitives Cursor turned into table stakes — and the one nobody is copying yet." },
+      { title: "The GPU Shortage Is a Lie — Here's the Real Bottleneck", pitch: "Walks through supply data to show where capacity is actually stuck, and which downstream companies quietly benefit." },
+      { title: "The Real Reason Apple Killed the Car (It Isn't What They Said)", pitch: "Cross-references SEC filings, hiring freezes, and Vision Pro roadmap leaks to reconstruct the internal trade-off." },
+    ];
+  }
+  return [
+    { title: "The Story Behind the Photo That Broke the Internet", pitch: "Traces a viral image back to its source and unpacks who actually profited from its spread." },
+    { title: "The Town That Voted to Delete Itself", pitch: "Ground-level report from a community that legally dissolved — what triggered it and what came next." },
+    { title: "The Man Who Predicted 2026 — In 1998", pitch: "Reads a forgotten futurist essay against today's headlines and scores which calls landed." },
+    { title: "The Netflix Show Netflix Doesn't Want You to Find", pitch: "Investigates why a well-reviewed series was quietly removed from search — and how to still watch it legally." },
+    { title: "The Country Paying People to Move There", pitch: "On-the-ground breakdown of a real relocation programme, including the fine print nobody mentions." },
+  ];
+}
+
 function RunAgentWizard({
   agent,
   onClose,
