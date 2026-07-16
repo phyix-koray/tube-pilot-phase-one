@@ -487,6 +487,96 @@ export function mockSuggestedIdeas(
   ];
 }
 
+// Generate NEW similar topics (not just title variations) — full ViralTopic
+// entries with fresh mock metrics so the user gets real "more like this"
+// choices, not just reworded hooks of the same underlying idea.
+function mockMoreLikeThis(src: ViralTopic, genre: string): ViralTopic[] {
+  const titles = mockIterateTitles(src.title, genre);
+  const rng = (seed: number) => {
+    let x = seed;
+    return () => {
+      x = (x * 9301 + 49297) % 233280;
+      return x / 233280;
+    };
+  };
+  const r = rng(src.title.length * 3 + genre.length + 11);
+  const channels = ["@echoloop", "@sidebrief", "@primaryfeed", "@thecutline", "@fieldnote"];
+  return titles.slice(0, 3).map((title, i) => {
+    const subs = Math.floor(80_000 + r() * 2_500_000);
+    const views = Math.floor(subs * (0.8 + r() * 3.5));
+    const days = Math.max(1, Math.floor(1 + r() * 14));
+    const ratio = +(views / subs).toFixed(2);
+    const velocity = Math.floor(views / days);
+    const score = +(ratio * 10 + velocity / 1000).toFixed(1);
+    return {
+      id: `${src.id}-mlt-${i}`,
+      title,
+      channel: channels[(i + src.title.length) % channels.length],
+      views,
+      subs,
+      ratio,
+      velocity,
+      score,
+      publishedDaysAgo: days,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Recurring content plan (daily / weekly) — editable spreadsheet the agent
+// auto-fills so the user can review a full run schedule in one place.
+// ---------------------------------------------------------------------------
+export type PlanRow = {
+  id: string;
+  date: string;
+  title: string;
+  topic: string;
+  length: string;
+  format: string;
+  artStyle: string;
+  webSearch: boolean;
+  deepResearch: boolean;
+};
+
+const FORMATS = ["Documentary", "Explainer", "Story", "Listicle", "Case study", "Debunk", "Timeline"];
+const ART_STYLES = ["Cinematic photoreal", "Vintage archival", "Minimal 2D motion", "Editorial noir", "Warm sunset realism", "Neo-noir illustration"];
+const LENGTHS = ["3–5 min", "5–10 min", "8–12 min", "10–15 min"];
+
+export function mockPlanRows(
+  genre: string,
+  cadence: "daily" | "weekly",
+  count = 7,
+): PlanRow[] {
+  const ideas = mockSuggestedIdeas(genre);
+  const viral = mockViralTopics(genre, []);
+  const pool = [
+    ...ideas.map((i) => ({ title: i.title, topic: i.pitch })),
+    ...viral.map((v) => ({
+      title: v.title,
+      topic: `Deep-dive angle on "${v.title}" — targets the same over-performing hook with an original narrative.`,
+    })),
+  ];
+  const today = new Date();
+  return Array.from({ length: count }).map((_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() + (cadence === "weekly" ? (i + 1) * 7 : i + 1));
+    const p = pool[i % pool.length];
+    return {
+      id: `row-${i}`,
+      date: d.toISOString().slice(0, 10),
+      title: p.title,
+      topic: p.topic,
+      length: LENGTHS[i % LENGTHS.length],
+      format: FORMATS[i % FORMATS.length],
+      artStyle: ART_STYLES[i % ART_STYLES.length],
+      webSearch: true,
+      deepResearch: i % 2 === 0,
+    };
+  });
+}
+
+
+
 export function RunAgentWizard({
   agent,
   onClose,
