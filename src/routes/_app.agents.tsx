@@ -596,10 +596,23 @@ export function RunAgentWizard({
   const runViralSearch = () => {
     setSearching(true);
     setPickedTopic(null);
+    setTopics([]);
+    setIterations({});
     setTimeout(() => {
       setTopics(mockViralTopics(genre, seenTitles));
       setSearching(false);
-    }, 1100);
+    }, 5000);
+  };
+
+  const iterateFrom = (t: ViralTopic) => {
+    setIteratingId(t.id);
+    setTimeout(() => {
+      setIterations((prev) => ({
+        ...prev,
+        [t.id]: mockIterateTitles(t.title, genre),
+      }));
+      setIteratingId(null);
+    }, 3000);
   };
 
   const pickedTopicObj = topics.find((t) => t.id === pickedTopic) ?? null;
