@@ -1726,6 +1726,76 @@ export function RunAgentWizard({
   );
 }
 
+function ThinkingBlock({
+  accent,
+  kind,
+}: {
+  accent: string;
+  kind: "viral" | "iterate" | "analysis";
+}) {
+  const stepsByKind: Record<typeof kind, string[]> = {
+    viral: [
+      "Querying YouTube Data API for the niche…",
+      "Filtering for videos published in the last 14 days…",
+      "Scoring by view / subscriber ratio and daily velocity…",
+      "Ranking the strongest viral hooks…",
+    ],
+    iterate: [
+      "Reading the source hook…",
+      "Swapping protagonists and reframing the angle…",
+      "Drafting sibling titles…",
+    ],
+    analysis: [
+      "Clustering titles by hook shape…",
+      "Extracting recurring narrative patterns…",
+      "Summarising into 5 reusable formats…",
+    ],
+  };
+  const items = stepsByKind[kind];
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 900);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div
+      className="rounded-lg bg-raised/60 p-4 space-y-2.5"
+      style={{ border: `1px dashed ${accent}` }}
+    >
+      <div className="flex items-center gap-2 text-[13px] font-medium">
+        <span
+          className="inline-block w-3.5 h-3.5 rounded-full animate-pulse"
+          style={{ backgroundColor: accent }}
+        />
+        <span className="text-text-primary">Agent thinking…</span>
+        <span className="text-text-tertiary text-[11px]">
+          {".".repeat((tick % 3) + 1)}
+        </span>
+      </div>
+      <ul className="space-y-1.5">
+        {items.map((s, i) => {
+          const active = i <= tick % (items.length + 1);
+          return (
+            <li
+              key={i}
+              className={cn(
+                "flex items-center gap-2 text-[12px] transition-opacity",
+                active ? "opacity-100" : "opacity-40",
+              )}
+            >
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: active ? accent : "var(--tp-subtle)" }}
+              />
+              <span className="text-text-secondary">{s}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function ChoiceOption({
   active,
   accent,
