@@ -531,6 +531,9 @@ export function RunAgentWizard({
   const [topics, setTopics] = useState<ViralTopic[]>([]);
   const [pickedTopic, setPickedTopic] = useState<string | null>(null);
   const [seenTitles, setSeenTitles] = useState<string[]>([]);
+  const [iterations, setIterations] = useState<Record<string, string[]>>({});
+  const [iteratingId, setIteratingId] = useState<string | null>(null);
+  const [pickedIdea, setPickedIdea] = useState<number | null>(null);
 
   const isRecurring = mode === "daily" || mode === "weekly";
 
