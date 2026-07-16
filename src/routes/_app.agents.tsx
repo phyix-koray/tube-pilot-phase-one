@@ -2056,16 +2056,13 @@ export function RunAgentWizard({
                           }
                           multiline
                         />
-                        <ReviewRow
-                          label="Content plan"
-                          value={
-                            plan.length === 0
-                              ? "No plan generated yet — open the Content plan step."
-                              : `${plan.length} scheduled ${mode === "weekly" ? "weeks" : "days"} · first: ${plan[0].date} — "${plan[0].title || "(untitled)"}"`
-                          }
-                          multiline
+                        <PlanReviewSummary
+                          plan={plan}
+                          mode={mode as "daily" | "weekly"}
+                          accent={accent}
                         />
                       </>
+
                     ) : (
                       <ReviewRow
                         label="Topic"
@@ -2327,3 +2324,116 @@ function ReviewRow({
     </div>
   );
 }
+
+function PlanReviewSummary({
+  plan,
+  mode,
+  accent,
+}: {
+  plan: PlanRow[];
+  mode: "daily" | "weekly";
+  accent: string;
+}) {
+  if (plan.length === 0) {
+    return (
+      <ReviewRow
+        label="Plan"
+        value="No plan generated yet — open the Content plan step."
+        multiline
+      />
+    );
+  }
+
+  const totalMinutes = plan.reduce((sum, r) => {
+    const n = parseInt(r.length, 10);
+    return sum + (isNaN(n) ? 0 : n);
+  }, 0);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remMin = totalMinutes % 60;
+  const totalLabel =
+    totalHours > 0 ? `${totalHours}h ${remMin}m` : `${totalMinutes}m`;
+
+  const formats = Array.from(new Set(plan.map((r) => r.format))).join(", ");
+  const artStyles = Array.from(new Set(plan.map((r) => r.artStyle))).join(", ");
+  const webCount = plan.filter((r) => r.webSearch).length;
+  const deepCount = plan.filter((r) => r.deepResearch).length;
+
+  const preview = plan.slice(0, 3);
+
+  return (
+    <div className="flex gap-3 px-3 py-2.5">
+      <div className="w-20 shrink-0 text-[11px] uppercase tracking-wide text-text-tertiary pt-0.5">
+        Plan
+      </div>
+      <div className="flex-1 min-w-0 space-y-2.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-text-secondary">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5"
+            style={{ borderColor: `${accent}55`, color: accent }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: accent }}
+            />
+            {plan.length} {mode === "weekly" ? "weeks" : "days"} scheduled
+          </span>
+          <span>Total runtime · <span className="text-text-primary">{totalLabel}</span></span>
+          <span>Formats · <span className="text-text-primary">{formats}</span></span>
+          <span>Art · <span className="text-text-primary">{artStyles}</span></span>
+          <span>
+            Research ·{" "}
+            <span className="text-text-primary">
+              {webCount} web · {deepCount} deep
+            </span>
+          </span>
+        </div>
+        <div className="overflow-hidden rounded-md border border-subtle">
+          <table className="w-full text-[12px]">
+            <thead className="bg-raised/60 text-text-tertiary">
+              <tr>
+                <th className="text-left font-medium px-2 py-1.5 w-8">#</th>
+                <th className="text-left font-medium px-2 py-1.5 w-24">Date</th>
+                <th className="text-left font-medium px-2 py-1.5">Title</th>
+                <th className="text-left font-medium px-2 py-1.5 w-16">Len</th>
+                <th className="text-left font-medium px-2 py-1.5 w-20">Fmt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {preview.map((row, i) => (
+                <tr key={i} className="border-t border-subtle">
+                  <td className="px-2 py-1.5 text-text-tertiary tabular-nums">
+                    {String(i + 1).padStart(2, "0")}
+                  </td>
+                  <td className="px-2 py-1.5 text-text-secondary tabular-nums">
+                    {row.date}
+                  </td>
+                  <td className="px-2 py-1.5 text-text-primary truncate max-w-0">
+                    {row.title || <span className="text-text-tertiary">(untitled)</span>}
+                  </td>
+                  <td className="px-2 py-1.5 text-text-secondary tabular-nums">
+                    {row.length}m
+                  </td>
+                  <td className="px-2 py-1.5 text-text-secondary">
+                    {row.format}
+                  </td>
+                </tr>
+              ))}
+              {plan.length > preview.length && (
+                <tr className="border-t border-subtle">
+                  <td
+                    colSpan={5}
+                    className="px-2 py-1.5 text-text-tertiary text-center"
+                  >
+                    + {plan.length - preview.length} more{" "}
+                    {mode === "weekly" ? "weeks" : "days"} — edit in Content plan step
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
