@@ -10,7 +10,7 @@ import {
   Settings2,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   mockChannels,
   mockVideos,
