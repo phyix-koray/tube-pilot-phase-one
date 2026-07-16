@@ -606,22 +606,36 @@ export function RunAgentWizard({
   const stepKey = RUN_STEPS[clampedStep].key;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-      <button
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-      />
+    <div
+      className={
+        variant === "page"
+          ? "w-full"
+          : "fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      }
+    >
+      {variant === "modal" && (
+        <button
+          aria-label="Close"
+          onClick={onClose}
+          className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        />
+      )}
       <div
-        className="relative w-full max-w-2xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
+        className={
+          variant === "page"
+            ? "relative w-full max-w-3xl mx-auto rounded-2xl bg-surface card-shadow overflow-hidden flex flex-col"
+            : "relative w-full max-w-2xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
+        }
         style={{ border: `2px solid ${accent}` }}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-8 h-8 rounded-md hover:bg-hover flex items-center justify-center text-text-secondary z-10"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        {variant === "modal" && (
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 rounded-md hover:bg-hover flex items-center justify-center text-text-secondary z-10"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Header */}
         <div className="flex items-center gap-3 px-5 pt-5">
