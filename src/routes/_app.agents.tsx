@@ -2003,23 +2003,40 @@ export function RunAgentWizard({
                     <ReviewRow label="Timezone" value={tzLabel(tz)} />
                     <ReviewRow label="Niche" value={genre || "—"} />
                     {isRecurring ? (
-                      <ReviewRow
-                        label="Topic source"
-                        value={`Auto — pick highest-scoring viral topic each run, skipping the ${seenTitles.length} title${seenTitles.length === 1 ? "" : "s"} already used.`}
-                        multiline
-                      />
+                      <>
+                        <ReviewRow
+                          label="Theme"
+                          value={
+                            themeSource === "channel"
+                              ? (analyzed ?? `Pending analysis of ${channelRef || "…"}`)
+                              : videoTheme || "(manual theme not set)"
+                          }
+                          multiline
+                        />
+                        <ReviewRow
+                          label="Content plan"
+                          value={
+                            plan.length === 0
+                              ? "No plan generated yet — open the Content plan step."
+                              : `${plan.length} scheduled ${mode === "weekly" ? "weeks" : "days"} · first: ${plan[0].date} — "${plan[0].title || "(untitled)"}"`
+                          }
+                          multiline
+                        />
+                      </>
                     ) : (
                       <ReviewRow
                         label="Topic"
                         value={
                           pickedTopicObj
-                            ? `${pickedTopicObj.title} · score ${pickedTopicObj.score} · ${formatNum(pickedTopicObj.views)} views`
-                            : "No topic picked yet — go back to the Viral topic step."
+                            ? `${pickedTopicObj.title}${pickedTopicObj.score ? ` · score ${pickedTopicObj.score} · ${formatNum(pickedTopicObj.views)} views` : ""}`
+                            : "No topic picked yet — go back to the Topic step."
                         }
                         multiline
                       />
                     )}
-                    <ReviewRow label="Video length" value={lengthLabel} />
+                    {!isRecurring && (
+                      <ReviewRow label="Video length" value={lengthLabel} />
+                    )}
                   </>
                 ) : (
                   <>
