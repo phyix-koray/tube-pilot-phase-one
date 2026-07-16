@@ -956,6 +956,73 @@ function RunAgentWizard({
                 </div>
               )}
 
+              {topics.length > 0 && (
+                <>
+                  <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
+                      <Sparkles className="w-3 h-3" />
+                      AI analysis — common patterns
+                    </div>
+                    <ol className="space-y-1.5 text-[12.5px] text-text-secondary list-decimal pl-4">
+                      {mockCommonPatterns(genre).map((p, i) => (
+                        <li key={i}>{p}</li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="rounded-lg border border-subtle bg-raised/40 p-3.5 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-tertiary">
+                      <Sparkles className="w-3 h-3" />
+                      5 original video ideas
+                    </div>
+                    <div className="space-y-2">
+                      {mockSuggestedIdeas(genre).map((idea, i) => (
+                        <div
+                          key={i}
+                          className="rounded-md bg-surface border border-subtle p-2.5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="text-[12.5px] font-semibold min-w-0">
+                              {i + 1}. {idea.title}
+                            </div>
+                            {!isRecurring && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const synthetic: ViralTopic = {
+                                    id: `idea-${i}`,
+                                    title: idea.title,
+                                    channel: "AI original idea",
+                                    views: 0,
+                                    subs: 0,
+                                    ratio: 0,
+                                    velocity: 0,
+                                    score: 0,
+                                    publishedDaysAgo: 0,
+                                  };
+                                  setTopics((prev) =>
+                                    prev.find((t) => t.id === synthetic.id)
+                                      ? prev
+                                      : [...prev, synthetic],
+                                  );
+                                  setPickedTopic(synthetic.id);
+                                }}
+                                className="shrink-0 rounded-md border border-subtle hover:bg-hover px-2 h-6 text-[11px] font-medium"
+                              >
+                                Use this idea
+                              </button>
+                            )}
+                          </div>
+                          <div className="mt-1 text-[12px] text-text-secondary">
+                            {idea.pitch}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
               {topics.length === 0 && !searching && (
                 <div className="rounded-md bg-raised/40 border border-dashed border-subtle p-4 text-center text-[12px] text-text-tertiary">
                   Enter a niche and click <b>Find viral topics</b>. The AI runs a YouTube search filtered by view velocity and view/subscriber ratio (mirrors the viral_finder.py pipeline).
