@@ -1279,7 +1279,7 @@ export function RunAgentWizard({
                             </td>
                             <td className={cell}>
                               <textarea
-                                rows={2}
+                                rows={1}
                                 value={row.topic}
                                 onChange={(e) =>
                                   setPlan((prev) =>
@@ -1288,10 +1288,19 @@ export function RunAgentWizard({
                                     ),
                                   )
                                 }
-                                className="w-full min-h-[36px] bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 py-1.5 text-[12px] leading-snug resize-y outline-none border-0"
+                                onFocus={(e) => {
+                                  e.currentTarget.rows = 3;
+                                }}
+                                onBlur={(e) => {
+                                  e.currentTarget.rows = 1;
+                                  e.currentTarget.scrollTop = 0;
+                                }}
+                                className="w-full h-9 focus:h-auto bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 py-2 text-[12px] leading-snug resize-none outline-none border-0 overflow-hidden focus:overflow-auto transition-[height]"
                                 style={{ ["--tw-ring-color" as string]: accent }}
+                                placeholder="Detailed topic description…"
                               />
                             </td>
+
                             <td className={cell}>
                               <select
                                 value={row.length}
