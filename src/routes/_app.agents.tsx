@@ -767,6 +767,26 @@ export function RunAgentWizard({
     if (!videoGuidelineTouched) setVideoGuideline(draftVideoGuideline(effectiveTheme));
   }, [effectiveTheme, guidelineTouched, videoGuidelineTouched]);
 
+  // Auto-generate the recurring content plan the first time the user
+  // reaches the "plan" step, so the spreadsheet is never empty.
+  const currentKey = RUN_STEPS[Math.min(step, RUN_STEPS.length - 1)].key;
+  useEffect(() => {
+    if (currentKey !== "plan" || !isVideo) return;
+    if (plan.length > 0 || planGenerating) return;
+    setPlanGenerating(true);
+    const t = setTimeout(() => {
+      setPlan(
+        mockPlanRows(
+          genre || "editorial",
+          mode === "weekly" ? "weekly" : "daily",
+          mode === "weekly" ? 6 : 7,
+        ),
+      );
+      setPlanGenerating(false);
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [currentKey, isVideo, plan.length, planGenerating, genre, mode]);
+
 
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
   const prev = () => setStep((s) => Math.max(s - 1, 0));
