@@ -550,7 +550,10 @@ export function RunAgentWizard({
       ? [
           { key: "channel", title: "Channel" },
           { key: "schedule", title: "Schedule" },
-          { key: "topic", title: isRecurring ? "Niche" : "Viral topic" },
+          { key: "niche", title: "Niche" },
+          { key: "viral", title: "Viral results" },
+          { key: "patterns", title: "AI analysis" },
+          { key: "ideas", title: "Original ideas" },
           { key: "length", title: "Video length" },
           { key: "review", title: "Review" },
         ]
