@@ -669,6 +669,8 @@ export function RunAgentWizard({
   // Recurring video plan (daily/weekly) — auto-generated editable table
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
+  const planAutoGenRef = useRef(false);
+
   const [videoTheme, setVideoTheme] = useState("");
 
   const isRecurring = mode === "daily" || mode === "weekly";
