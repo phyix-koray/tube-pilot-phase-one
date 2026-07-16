@@ -366,6 +366,47 @@ function formatNum(n: number): string {
   return String(n);
 }
 
+// Generate similar/iterated variations of a viral title (mock "AI"). Mirrors
+// the "iterate from this" pattern where the model expands one hook into
+// sibling angles the user can pick from.
+function mockIterateTitles(sourceTitle: string, genre: string): string[] {
+  const g = genre.trim().toLowerCase();
+  const src = sourceTitle;
+  // Genre-agnostic transforms: swap protagonist, invert framing, add stakes.
+  const swaps: Record<string, string[]> = {
+    OpenAI: ["Anthropic", "Google DeepMind", "Meta AI"],
+    Apple: ["Google", "Microsoft", "Samsung"],
+    Cursor: ["Windsurf", "Zed", "Copilot Workspace"],
+    BlackRock: ["Vanguard", "Bridgewater", "State Street"],
+    Yen: ["Yuan", "Lira", "Peso"],
+    Ottoman: ["Byzantine", "Mongol", "Habsburg"],
+    Roman: ["Persian", "Chinese", "Mayan"],
+    Netflix: ["Disney+", "HBO", "Prime Video"],
+  };
+  const found = Object.keys(swaps).find((k) => src.includes(k));
+  const variants: string[] = [];
+  if (found) {
+    swaps[found].forEach((alt) => variants.push(src.replace(found, alt)));
+  }
+  // Add framing variants regardless
+  variants.push(
+    src.startsWith("Why")
+      ? src.replace(/^Why/, "The Real Reason")
+      : `Why ${src}`,
+  );
+  variants.push(
+    src.includes("Nobody")
+      ? src.replace("Nobody", "Everyone")
+      : `${src} — And Why It Matters Now`,
+  );
+  if (g.includes("finance")) variants.push(`The Hidden Cost Behind ${src}`);
+  else if (g.includes("history")) variants.push(`The Untold Story of ${src}`);
+  else if (g.includes("tech")) variants.push(`What ${src} Actually Means for 2027`);
+  else variants.push(`Inside ${src}`);
+  // Dedupe & keep first 4
+  return Array.from(new Set(variants.filter((v) => v && v !== src))).slice(0, 4);
+}
+
 // Mirrors the "AI ANALİZ VE İÇERİK FİKİRLERİ" block from viral_finder.py output.
 export function mockCommonPatterns(genre: string): string[] {
   const g = genre.trim().toLowerCase();
