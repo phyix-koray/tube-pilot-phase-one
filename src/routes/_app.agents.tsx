@@ -96,9 +96,23 @@ function AgentsPage() {
           Your agents
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((w) => (
-            <AgentCard key={w.id} w={w} onUse={() => setRunTarget(w)} />
-          ))}
+          {filtered.map((w) => {
+            const isVideoAgent =
+              w.id === "ai-video-generator" || w.id === "stock-video-generator";
+            return (
+              <AgentCard
+                key={w.id}
+                w={w}
+                onUse={() => {
+                  if (isVideoAgent && typeof window !== "undefined") {
+                    window.open(`/run/${w.id}`, "_blank", "noopener");
+                  } else {
+                    setRunTarget(w);
+                  }
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
