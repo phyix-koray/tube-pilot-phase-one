@@ -432,14 +432,16 @@ export function mockSuggestedIdeas(
   ];
 }
 
-function RunAgentWizard({
+export function RunAgentWizard({
   agent,
   onClose,
   onDone,
+  variant = "modal",
 }: {
   agent: Workflow;
-  onClose: () => void;
+  onClose?: () => void;
   onDone: (message: string) => void;
+  variant?: "modal" | "page";
 }) {
   const navigate = useNavigate();
   const accent = agent.accent ?? "var(--tp-subtle)";
