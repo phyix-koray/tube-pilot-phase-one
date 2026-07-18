@@ -823,10 +823,10 @@ export function RunAgentWizard({
       <div
         className={
           variant === "page"
-            ? "relative w-full max-w-3xl mx-auto rounded-2xl bg-surface card-shadow overflow-hidden flex flex-col"
+            ? "relative w-full bg-transparent flex flex-col"
             : "relative w-full max-w-2xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
         }
-        style={{ border: `2px solid ${accent}` }}
+        style={variant === "page" ? undefined : { border: `2px solid ${accent}` }}
       >
         {variant === "modal" && (
           <button
