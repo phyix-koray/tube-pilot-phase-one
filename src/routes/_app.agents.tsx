@@ -670,6 +670,24 @@ export function RunAgentWizard({
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
   const planAutoGenRef = useRef(false);
+  const DEFAULT_COL_WIDTHS = [44, 128, 240, 360, 108, 148, 176, 64, 64, 44];
+  const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS);
+  const startColResize = (idx: number, e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startW = colWidths[idx];
+    const onMove = (ev: PointerEvent) => {
+      const w = Math.max(48, startW + ev.clientX - startX);
+      setColWidths((prev) => prev.map((c, i) => (i === idx ? w : c)));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
 
   const [videoTheme, setVideoTheme] = useState("");
 
@@ -823,10 +841,10 @@ export function RunAgentWizard({
       <div
         className={
           variant === "page"
-            ? "relative w-full max-w-3xl mx-auto rounded-2xl bg-surface card-shadow overflow-hidden flex flex-col"
+            ? "relative w-full bg-transparent flex flex-col"
             : "relative w-full max-w-2xl rounded-2xl bg-surface card-shadow overflow-hidden max-h-[92vh] flex flex-col"
         }
-        style={{ border: `2px solid ${accent}` }}
+        style={variant === "page" ? undefined : { border: `2px solid ${accent}` }}
       >
         {variant === "modal" && (
           <button
@@ -1227,19 +1245,47 @@ export function RunAgentWizard({
                 <ThinkingBlock accent={accent} kind="plan" />
               ) : (
                 <div className="overflow-x-auto rounded-lg border border-subtle bg-raised/30">
-                  <table className="w-full text-[12px] min-w-[1120px] border-separate border-spacing-0">
+                  <table
+                    className="text-[12px] border-separate border-spacing-0 table-fixed"
+                    style={{ width: colWidths.reduce((a, b) => a + b, 0) }}
+                  >
+                    <colgroup>
+                      {colWidths.map((w, i) => (
+                        <col key={i} style={{ width: w }} />
+                      ))}
+                    </colgroup>
                     <thead className="bg-raised text-text-tertiary text-[10.5px] uppercase tracking-wide sticky top-0 z-10">
                       <tr>
-                        <th className="text-left font-medium px-2 py-2 w-10 border-b border-subtle">#</th>
-                        <th className="text-left font-medium px-2 py-2 w-28 border-b border-l border-subtle">Date</th>
-                        <th className="text-left font-medium px-2 py-2 w-56 border-b border-l border-subtle">Video title</th>
-                        <th className="text-left font-medium px-2 py-2 min-w-[260px] border-b border-l border-subtle">Topic (detailed)</th>
-                        <th className="text-left font-medium px-2 py-2 w-24 border-b border-l border-subtle">Length</th>
-                        <th className="text-left font-medium px-2 py-2 w-32 border-b border-l border-subtle">Format</th>
-                        <th className="text-left font-medium px-2 py-2 w-40 border-b border-l border-subtle">Art style</th>
-                        <th className="text-center font-medium px-2 py-2 w-14 border-b border-l border-subtle">Web</th>
-                        <th className="text-center font-medium px-2 py-2 w-14 border-b border-l border-subtle">Deep</th>
-                        <th className="w-10 border-b border-l border-subtle"></th>
+                        {[
+                          { label: "#", align: "left" },
+                          { label: "Date", align: "left" },
+                          { label: "Video title", align: "left" },
+                          { label: "Topic (detailed)", align: "left" },
+                          { label: "Length", align: "left" },
+                          { label: "Format", align: "left" },
+                          { label: "Art style", align: "left" },
+                          { label: "Web", align: "center" },
+                          { label: "Deep", align: "center" },
+                          { label: "", align: "left" },
+                        ].map((h, i) => (
+                          <th
+                            key={i}
+                            className={cn(
+                              "relative font-medium px-2 py-2 border-b border-subtle select-none",
+                              i > 0 && "border-l",
+                              h.align === "center" ? "text-center" : "text-left",
+                            )}
+                          >
+                            {h.label}
+                            {i < colWidths.length - 1 && (
+                              <span
+                                onPointerDown={(e) => startColResize(i, e)}
+                                className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize hover:bg-text-tertiary/40 active:bg-text-tertiary/60"
+                                style={{ transform: "translateX(50%)" }}
+                              />
+                            )}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
