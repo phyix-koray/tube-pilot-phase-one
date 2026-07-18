@@ -1245,19 +1245,47 @@ export function RunAgentWizard({
                 <ThinkingBlock accent={accent} kind="plan" />
               ) : (
                 <div className="overflow-x-auto rounded-lg border border-subtle bg-raised/30">
-                  <table className="w-full text-[12px] min-w-[1120px] border-separate border-spacing-0">
+                  <table
+                    className="text-[12px] border-separate border-spacing-0 table-fixed"
+                    style={{ width: colWidths.reduce((a, b) => a + b, 0) }}
+                  >
+                    <colgroup>
+                      {colWidths.map((w, i) => (
+                        <col key={i} style={{ width: w }} />
+                      ))}
+                    </colgroup>
                     <thead className="bg-raised text-text-tertiary text-[10.5px] uppercase tracking-wide sticky top-0 z-10">
                       <tr>
-                        <th className="text-left font-medium px-2 py-2 w-10 border-b border-subtle">#</th>
-                        <th className="text-left font-medium px-2 py-2 w-28 border-b border-l border-subtle">Date</th>
-                        <th className="text-left font-medium px-2 py-2 w-56 border-b border-l border-subtle">Video title</th>
-                        <th className="text-left font-medium px-2 py-2 min-w-[260px] border-b border-l border-subtle">Topic (detailed)</th>
-                        <th className="text-left font-medium px-2 py-2 w-24 border-b border-l border-subtle">Length</th>
-                        <th className="text-left font-medium px-2 py-2 w-32 border-b border-l border-subtle">Format</th>
-                        <th className="text-left font-medium px-2 py-2 w-40 border-b border-l border-subtle">Art style</th>
-                        <th className="text-center font-medium px-2 py-2 w-14 border-b border-l border-subtle">Web</th>
-                        <th className="text-center font-medium px-2 py-2 w-14 border-b border-l border-subtle">Deep</th>
-                        <th className="w-10 border-b border-l border-subtle"></th>
+                        {[
+                          { label: "#", align: "left" },
+                          { label: "Date", align: "left" },
+                          { label: "Video title", align: "left" },
+                          { label: "Topic (detailed)", align: "left" },
+                          { label: "Length", align: "left" },
+                          { label: "Format", align: "left" },
+                          { label: "Art style", align: "left" },
+                          { label: "Web", align: "center" },
+                          { label: "Deep", align: "center" },
+                          { label: "", align: "left" },
+                        ].map((h, i) => (
+                          <th
+                            key={i}
+                            className={cn(
+                              "relative font-medium px-2 py-2 border-b border-subtle select-none",
+                              i > 0 && "border-l",
+                              h.align === "center" ? "text-center" : "text-left",
+                            )}
+                          >
+                            {h.label}
+                            {i < colWidths.length - 1 && (
+                              <span
+                                onPointerDown={(e) => startColResize(i, e)}
+                                className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize hover:bg-text-tertiary/40 active:bg-text-tertiary/60"
+                                style={{ transform: "translateX(50%)" }}
+                              />
+                            )}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
