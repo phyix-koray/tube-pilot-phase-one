@@ -670,6 +670,24 @@ export function RunAgentWizard({
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
   const planAutoGenRef = useRef(false);
+  const DEFAULT_COL_WIDTHS = [44, 128, 240, 360, 108, 148, 176, 64, 64, 44];
+  const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS);
+  const startColResize = (idx: number, e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startW = colWidths[idx];
+    const onMove = (ev: PointerEvent) => {
+      const w = Math.max(48, startW + ev.clientX - startX);
+      setColWidths((prev) => prev.map((c, i) => (i === idx ? w : c)));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
 
   const [videoTheme, setVideoTheme] = useState("");
 
