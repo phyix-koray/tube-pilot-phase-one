@@ -6,6 +6,7 @@ import {
   Play,
   Settings as SettingsIcon,
   Zap,
+  PanelLeftClose,
 } from "lucide-react";
 import { mockUser, mockWorkflows } from "@/mock/data";
 import { cn } from "@/lib/tp";
