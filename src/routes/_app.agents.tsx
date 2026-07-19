@@ -539,7 +539,7 @@ export type PlanRow = {
 };
 
 const FORMATS = ["Documentary", "Explainer", "Story", "Listicle", "Case study", "Debunk", "Timeline"];
-const ART_STYLES = ["Cinematic photoreal", "Vintage archival", "Minimal 2D motion", "Editorial noir", "Warm sunset realism", "Neo-noir illustration"];
+const ART_STYLES = ["Stickman", "Cinematic photoreal", "Vintage archival", "Minimal 2D motion", "Editorial noir", "Warm sunset realism", "Neo-noir illustration"];
 const LENGTHS = ["3–5 min", "5–10 min", "8–12 min", "10–15 min"];
 
 export function mockPlanRows(
@@ -568,7 +568,7 @@ export function mockPlanRows(
       topic: p.topic,
       length: LENGTHS[i % LENGTHS.length],
       format: FORMATS[i % FORMATS.length],
-      artStyle: ART_STYLES[i % ART_STYLES.length],
+      artStyle: "Stickman",
       webSearch: true,
       deepResearch: i % 2 === 0,
     };
@@ -670,15 +670,37 @@ export function RunAgentWizard({
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
   const planAutoGenRef = useRef(false);
-  const DEFAULT_COL_WIDTHS = [44, 128, 240, 360, 108, 148, 176, 64, 64, 44];
+  const DEFAULT_COL_WIDTHS = [36, 44, 128, 240, 360, 108, 148, 140, 64, 64, 44];
   const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<
+    | {
+        x: number;
+        y: number;
+        kind: "row" | "cell";
+        rowIdx: number;
+        cellKey?: keyof PlanRow;
+      }
+    | null
+  >(null);
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [ctxMenu]);
   const startColResize = (idx: number, e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
     const startW = colWidths[idx];
     const onMove = (ev: PointerEvent) => {
-      const w = Math.max(48, startW + ev.clientX - startX);
+      const w = Math.max(32, startW + ev.clientX - startX);
       setColWidths((prev) => prev.map((c, i) => (i === idx ? w : c)));
     };
     const onUp = () => {
@@ -688,6 +710,69 @@ export function RunAgentWizard({
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   };
+
+  const buildRow = (i: number, cadence: "daily" | "weekly"): PlanRow => {
+    const rows = mockPlanRows(genre || "editorial", cadence, i + 3);
+    const r = rows[(i + Math.floor(Math.random() * rows.length)) % rows.length];
+    return { ...r, id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+  };
+  const regenerateRow = (idx: number) => {
+    setPlan((prev) =>
+      prev.map((r, i) =>
+        i === idx
+          ? { ...buildRow(idx, mode === "weekly" ? "weekly" : "daily"), date: r.date, id: r.id }
+          : r,
+      ),
+    );
+  };
+  const insertRow = (idx: number, where: "above" | "below") => {
+    const cadence = mode === "weekly" ? "weekly" : "daily";
+    const nr = buildRow(idx, cadence);
+    setPlan((prev) => {
+      const at = where === "above" ? idx : idx + 1;
+      return [...prev.slice(0, at), nr, ...prev.slice(at)];
+    });
+  };
+  const duplicateRow = (idx: number) => {
+    setPlan((prev) => {
+      const src = prev[idx];
+      if (!src) return prev;
+      const clone = { ...src, id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+      return [...prev.slice(0, idx + 1), clone, ...prev.slice(idx + 1)];
+    });
+  };
+  const clearRow = (idx: number) => {
+    setPlan((prev) =>
+      prev.map((r, i) =>
+        i === idx
+          ? { ...r, title: "", topic: "", webSearch: false, deepResearch: false }
+          : r,
+      ),
+    );
+  };
+  const deleteRow = (idx: number) =>
+    setPlan((prev) => prev.filter((_, i) => i !== idx));
+  const moveRow = (from: number, to: number) => {
+    if (from === to || to < 0) return;
+    setPlan((prev) => {
+      if (to >= prev.length) return prev;
+      const arr = [...prev];
+      const [item] = arr.splice(from, 1);
+      arr.splice(to, 0, item);
+      return arr;
+    });
+  };
+  const clearCell = (idx: number, key: keyof PlanRow) => {
+    setPlan((prev) =>
+      prev.map((r, i) => {
+        if (i !== idx) return r;
+        const empty: string | boolean =
+          typeof r[key] === "boolean" ? false : "";
+        return { ...r, [key]: empty } as PlanRow;
+      }),
+    );
+  };
+
 
   const [videoTheme, setVideoTheme] = useState("");
 
@@ -1244,7 +1329,7 @@ export function RunAgentWizard({
               {planGenerating || plan.length === 0 ? (
                 <ThinkingBlock accent={accent} kind="plan" />
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-subtle bg-raised/30">
+                <div className="overflow-auto rounded-lg border border-subtle bg-raised/30 max-h-[560px]">
                   <table
                     className="text-[12px] border-separate border-spacing-0 table-fixed"
                     style={{ width: colWidths.reduce((a, b) => a + b, 0) }}
@@ -1257,6 +1342,7 @@ export function RunAgentWizard({
                     <thead className="bg-raised text-text-tertiary text-[10.5px] uppercase tracking-wide sticky top-0 z-10">
                       <tr>
                         {[
+                          { label: "", align: "center" },
                           { label: "#", align: "left" },
                           { label: "Date", align: "left" },
                           { label: "Video title", align: "left" },
@@ -1292,13 +1378,86 @@ export function RunAgentWizard({
                       {plan.map((row, idx) => {
                         const cell = "border-b border-l border-subtle px-0 py-0 align-top";
                         const input =
-                          "w-full h-9 bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 text-[12px] outline-none border-0";
+                          "w-full h-11 bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 text-[12px] outline-none border-0";
+                        const openCellMenu = (
+                          e: React.MouseEvent,
+                          key: keyof PlanRow,
+                        ) => {
+                          e.preventDefault();
+                          setCtxMenu({
+                            x: e.clientX,
+                            y: e.clientY,
+                            kind: "cell",
+                            rowIdx: idx,
+                            cellKey: key,
+                          });
+                        };
+                        const isDropTarget = dropIdx === idx && dragIdx !== idx;
                         return (
-                          <tr key={row.id} className="group hover:bg-hover/30">
-                            <td className="border-b border-subtle px-2 py-0 text-[11px] text-text-tertiary font-mono tabular-nums">
+                          <tr
+                            key={row.id}
+                            className={cn(
+                              "group hover:bg-hover/30",
+                              isDropTarget && "outline outline-1 -outline-offset-1",
+                              dragIdx === idx && "opacity-50",
+                            )}
+                            style={
+                              isDropTarget
+                                ? { outlineColor: accent as string }
+                                : undefined
+                            }
+                            onDragOver={(e) => {
+                              if (dragIdx === null) return;
+                              e.preventDefault();
+                              setDropIdx(idx);
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (dragIdx !== null && dragIdx !== idx) {
+                                moveRow(dragIdx, idx);
+                              }
+                              setDragIdx(null);
+                              setDropIdx(null);
+                            }}
+                          >
+                            {/* Regen icon column */}
+                            <td className="border-b border-subtle px-0 py-0 text-center align-middle">
+                              <button
+                                type="button"
+                                onClick={() => regenerateRow(idx)}
+                                title="Regenerate this row with AI"
+                                className="w-7 h-7 rounded-md opacity-40 group-hover:opacity-100 hover:bg-hover inline-flex items-center justify-center transition-opacity"
+                                style={{ color: accent as string }}
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                            {/* # / drag handle */}
+                            <td
+                              draggable
+                              onDragStart={() => setDragIdx(idx)}
+                              onDragEnd={() => {
+                                setDragIdx(null);
+                                setDropIdx(null);
+                              }}
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                setCtxMenu({
+                                  x: e.clientX,
+                                  y: e.clientY,
+                                  kind: "row",
+                                  rowIdx: idx,
+                                });
+                              }}
+                              title="Drag to reorder — right-click for row actions"
+                              className="border-b border-l border-subtle px-2 py-0 text-[11px] text-text-tertiary font-mono tabular-nums cursor-grab active:cursor-grabbing select-none h-11 align-middle"
+                            >
                               {String(idx + 1).padStart(2, "0")}
                             </td>
-                            <td className={cell}>
+                            <td
+                              className={cell}
+                              onContextMenu={(e) => openCellMenu(e, "date")}
+                            >
                               <input
                                 type="date"
                                 value={row.date}
@@ -1313,8 +1472,12 @@ export function RunAgentWizard({
                                 style={{ ["--tw-ring-color" as string]: accent }}
                               />
                             </td>
-                            <td className={cell}>
-                              <input
+                            <td
+                              className={cell}
+                              onContextMenu={(e) => openCellMenu(e, "title")}
+                            >
+                              <textarea
+                                rows={1}
                                 value={row.title}
                                 onChange={(e) =>
                                   setPlan((prev) =>
@@ -1323,24 +1486,23 @@ export function RunAgentWizard({
                                     ),
                                   )
                                 }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    const next = e.currentTarget
-                                      .closest("tr")
-                                      ?.nextElementSibling?.querySelectorAll("input")[1] as
-                                      | HTMLInputElement
-                                      | undefined;
-                                    next?.focus();
-                                  }
+                                onFocus={(e) => {
+                                  e.currentTarget.rows = 3;
                                 }}
-                                className={cn(input, "font-medium")}
+                                onBlur={(e) => {
+                                  e.currentTarget.rows = 1;
+                                  e.currentTarget.scrollTop = 0;
+                                }}
+                                className="w-full h-11 focus:h-auto bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 py-2.5 text-[12px] font-medium leading-snug resize-none outline-none border-0 overflow-hidden focus:overflow-auto transition-[height]"
                                 style={{ ["--tw-ring-color" as string]: accent }}
                                 placeholder="Video title…"
                               />
                             </td>
 
-                            <td className={cell}>
+                            <td
+                              className={cell}
+                              onContextMenu={(e) => openCellMenu(e, "topic")}
+                            >
                               <textarea
                                 rows={1}
                                 value={row.topic}
@@ -1358,13 +1520,16 @@ export function RunAgentWizard({
                                   e.currentTarget.rows = 1;
                                   e.currentTarget.scrollTop = 0;
                                 }}
-                                className="w-full h-9 focus:h-auto bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 py-2 text-[12px] leading-snug resize-none outline-none border-0 overflow-hidden focus:overflow-auto transition-[height]"
+                                className="w-full h-11 focus:h-auto bg-transparent focus:bg-base focus:ring-1 focus:ring-inset px-2 py-2.5 text-[12px] leading-snug resize-none outline-none border-0 overflow-hidden focus:overflow-auto transition-[height]"
                                 style={{ ["--tw-ring-color" as string]: accent }}
                                 placeholder="Detailed topic description…"
                               />
                             </td>
 
-                            <td className={cell}>
+                            <td
+                              className={cell}
+                              onContextMenu={(e) => openCellMenu(e, "length")}
+                            >
                               <select
                                 value={row.length}
                                 onChange={(e) =>
@@ -1382,7 +1547,10 @@ export function RunAgentWizard({
                                 ))}
                               </select>
                             </td>
-                            <td className={cell}>
+                            <td
+                              className={cell}
+                              onContextMenu={(e) => openCellMenu(e, "format")}
+                            >
                               <select
                                 value={row.format}
                                 onChange={(e) =>
@@ -1400,7 +1568,10 @@ export function RunAgentWizard({
                                 ))}
                               </select>
                             </td>
-                            <td className={cell}>
+                            <td
+                              className={cell}
+                              onContextMenu={(e) => openCellMenu(e, "artStyle")}
+                            >
                               <select
                                 value={row.artStyle}
                                 onChange={(e) =>
@@ -1418,8 +1589,11 @@ export function RunAgentWizard({
                                 ))}
                               </select>
                             </td>
-                            <td className={cn(cell, "text-center")}>
-                              <div className="h-9 flex items-center justify-center">
+                            <td
+                              className={cn(cell, "text-center")}
+                              onContextMenu={(e) => openCellMenu(e, "webSearch")}
+                            >
+                              <div className="h-11 flex items-center justify-center">
                                 <input
                                   type="checkbox"
                                   checked={row.webSearch}
@@ -1434,8 +1608,11 @@ export function RunAgentWizard({
                                 />
                               </div>
                             </td>
-                            <td className={cn(cell, "text-center")}>
-                              <div className="h-9 flex items-center justify-center">
+                            <td
+                              className={cn(cell, "text-center")}
+                              onContextMenu={(e) => openCellMenu(e, "deepResearch")}
+                            >
+                              <div className="h-11 flex items-center justify-center">
                                 <input
                                   type="checkbox"
                                   checked={row.deepResearch}
@@ -1451,12 +1628,10 @@ export function RunAgentWizard({
                               </div>
                             </td>
                             <td className={cn(cell, "text-center")}>
-                              <div className="h-9 flex items-center justify-center">
+                              <div className="h-11 flex items-center justify-center">
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    setPlan((prev) => prev.filter((_, i) => i !== idx))
-                                  }
+                                  onClick={() => deleteRow(idx)}
                                   className="w-6 h-6 rounded-md opacity-0 group-hover:opacity-100 hover:bg-hover text-text-tertiary hover:text-text-primary inline-flex items-center justify-center"
                                   aria-label="Remove row"
                                 >
@@ -1469,6 +1644,73 @@ export function RunAgentWizard({
                       })}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {ctxMenu && (
+                <div
+                  className="fixed z-50 min-w-[200px] rounded-md border border-subtle bg-surface shadow-lg py-1 text-[12px]"
+                  style={{ left: ctxMenu.x, top: ctxMenu.y }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {ctxMenu.kind === "row" ? (
+                    <PlanContextMenu
+                      items={[
+                        { label: "Regenerate row", icon: Sparkles, onClick: () => regenerateRow(ctxMenu.rowIdx) },
+                        { label: "Insert row above", icon: Plus, onClick: () => insertRow(ctxMenu.rowIdx, "above") },
+                        { label: "Insert row below", icon: Plus, onClick: () => insertRow(ctxMenu.rowIdx, "below") },
+                        { label: "Duplicate row", onClick: () => duplicateRow(ctxMenu.rowIdx) },
+                        { label: "Move up", onClick: () => moveRow(ctxMenu.rowIdx, ctxMenu.rowIdx - 1) },
+                        { label: "Move down", onClick: () => moveRow(ctxMenu.rowIdx, ctxMenu.rowIdx + 1) },
+                        { divider: true },
+                        { label: "Clear row", onClick: () => clearRow(ctxMenu.rowIdx) },
+                        { label: "Delete row", icon: X, onClick: () => deleteRow(ctxMenu.rowIdx), danger: true },
+                      ]}
+                      onClose={() => setCtxMenu(null)}
+                    />
+                  ) : (
+                    <PlanContextMenu
+                      items={[
+                        {
+                          label: "Copy",
+                          onClick: () => {
+                            const r = plan[ctxMenu.rowIdx];
+                            const v = ctxMenu.cellKey ? r?.[ctxMenu.cellKey] : "";
+                            if (v != null) navigator.clipboard?.writeText(String(v));
+                          },
+                        },
+                        {
+                          label: "Paste",
+                          onClick: async () => {
+                            try {
+                              const text = await navigator.clipboard.readText();
+                              if (ctxMenu.cellKey) {
+                                setPlan((prev) =>
+                                  prev.map((r, i) =>
+                                    i === ctxMenu.rowIdx && ctxMenu.cellKey
+                                      ? ({ ...r, [ctxMenu.cellKey]: text } as PlanRow)
+                                      : r,
+                                  ),
+                                );
+                              }
+                            } catch {}
+                          },
+                        },
+                        {
+                          label: "Clear cell",
+                          onClick: () =>
+                            ctxMenu.cellKey && clearCell(ctxMenu.rowIdx, ctxMenu.cellKey),
+                        },
+                        { divider: true },
+                        { label: "Regenerate row", icon: Sparkles, onClick: () => regenerateRow(ctxMenu.rowIdx) },
+                        { label: "Insert row above", icon: Plus, onClick: () => insertRow(ctxMenu.rowIdx, "above") },
+                        { label: "Insert row below", icon: Plus, onClick: () => insertRow(ctxMenu.rowIdx, "below") },
+                        { divider: true },
+                        { label: "Delete row", icon: X, onClick: () => deleteRow(ctxMenu.rowIdx), danger: true },
+                      ]}
+                      onClose={() => setCtxMenu(null)}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -2508,4 +2750,52 @@ function PlanReviewSummary({
     </div>
   );
 }
+
+type PlanMenuItem =
+  | { divider: true }
+  | {
+      divider?: false;
+      label: string;
+      icon?: React.ComponentType<{ className?: string }>;
+      onClick: () => void;
+      danger?: boolean;
+    };
+
+function PlanContextMenu({
+  items,
+  onClose,
+}: {
+  items: PlanMenuItem[];
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {items.map((it, i) => {
+        if ("divider" in it && it.divider) {
+          return <div key={i} className="my-1 h-px bg-subtle" />;
+        }
+        const item = it as Exclude<PlanMenuItem, { divider: true }>;
+        const Icon = item.icon;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              item.onClick();
+              onClose();
+            }}
+            className={cn(
+              "w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-hover",
+              item.danger ? "text-red" : "text-text-primary",
+            )}
+          >
+            {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="w-3.5" />}
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
 
