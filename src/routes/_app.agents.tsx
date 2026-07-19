@@ -2751,3 +2751,51 @@ function PlanReviewSummary({
   );
 }
 
+type PlanMenuItem =
+  | { divider: true }
+  | {
+      divider?: false;
+      label: string;
+      icon?: React.ComponentType<{ className?: string }>;
+      onClick: () => void;
+      danger?: boolean;
+    };
+
+function PlanContextMenu({
+  items,
+  onClose,
+}: {
+  items: PlanMenuItem[];
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {items.map((it, i) => {
+        if ("divider" in it && it.divider) {
+          return <div key={i} className="my-1 h-px bg-subtle" />;
+        }
+        const item = it as Exclude<PlanMenuItem, { divider: true }>;
+        const Icon = item.icon;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              item.onClick();
+              onClose();
+            }}
+            className={cn(
+              "w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-hover",
+              item.danger ? "text-red" : "text-text-primary",
+            )}
+          >
+            {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="w-3.5" />}
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+
