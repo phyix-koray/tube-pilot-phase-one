@@ -33,7 +33,7 @@ const groups = [
   },
 ] as const;
 
-export function Sidebar() {
+export function Sidebar({ onCollapse }: { onCollapse?: () => void } = {}) {
   const pathname = useRouterState({
     select: (s) => s.location.pathname,
   });
@@ -57,9 +57,19 @@ export function Sidebar() {
             anyRunning ? "bg-green pulse-dot" : "bg-text-tertiary",
           )}
         />
-        <span className="text-[15px] font-semibold text-text-primary">
+        <span className="text-[15px] font-semibold text-text-primary flex-1">
           TubePilot
         </span>
+        {onCollapse && (
+          <button
+            type="button"
+            onClick={onCollapse}
+            className="p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover"
+            aria-label="Collapse sidebar"
+          >
+            <PanelLeftClose className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-6">
