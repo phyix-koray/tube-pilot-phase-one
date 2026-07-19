@@ -540,7 +540,7 @@ export type PlanRow = {
 
 const FORMATS = ["Documentary", "Explainer", "Story", "Listicle", "Case study", "Debunk", "Timeline"];
 const ART_STYLES = ["Stickman", "Cinematic photoreal", "Vintage archival", "Minimal 2D motion", "Editorial noir", "Warm sunset realism", "Neo-noir illustration"];
-const LENGTHS = ["3–5 min", "5–10 min", "8–12 min", "10–15 min"];
+const LENGTHS = ["1–5 min", "6–10 min", "11–20 min", "21–40 min", "41–60 min", "60–90 min"];
 
 export function mockPlanRows(
   genre: string,
