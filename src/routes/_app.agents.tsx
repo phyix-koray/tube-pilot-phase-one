@@ -670,15 +670,37 @@ export function RunAgentWizard({
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
   const planAutoGenRef = useRef(false);
-  const DEFAULT_COL_WIDTHS = [44, 128, 240, 360, 108, 148, 176, 64, 64, 44];
+  const DEFAULT_COL_WIDTHS = [36, 44, 128, 240, 360, 108, 148, 140, 64, 64, 44];
   const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<
+    | {
+        x: number;
+        y: number;
+        kind: "row" | "cell";
+        rowIdx: number;
+        cellKey?: keyof PlanRow;
+      }
+    | null
+  >(null);
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [ctxMenu]);
   const startColResize = (idx: number, e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
     const startW = colWidths[idx];
     const onMove = (ev: PointerEvent) => {
-      const w = Math.max(48, startW + ev.clientX - startX);
+      const w = Math.max(32, startW + ev.clientX - startX);
       setColWidths((prev) => prev.map((c, i) => (i === idx ? w : c)));
     };
     const onUp = () => {
@@ -688,6 +710,69 @@ export function RunAgentWizard({
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   };
+
+  const buildRow = (i: number, cadence: "daily" | "weekly"): PlanRow => {
+    const rows = mockPlanRows(genre || "editorial", cadence, i + 3);
+    const r = rows[(i + Math.floor(Math.random() * rows.length)) % rows.length];
+    return { ...r, id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+  };
+  const regenerateRow = (idx: number) => {
+    setPlan((prev) =>
+      prev.map((r, i) =>
+        i === idx
+          ? { ...buildRow(idx, mode === "weekly" ? "weekly" : "daily"), date: r.date, id: r.id }
+          : r,
+      ),
+    );
+  };
+  const insertRow = (idx: number, where: "above" | "below") => {
+    const cadence = mode === "weekly" ? "weekly" : "daily";
+    const nr = buildRow(idx, cadence);
+    setPlan((prev) => {
+      const at = where === "above" ? idx : idx + 1;
+      return [...prev.slice(0, at), nr, ...prev.slice(at)];
+    });
+  };
+  const duplicateRow = (idx: number) => {
+    setPlan((prev) => {
+      const src = prev[idx];
+      if (!src) return prev;
+      const clone = { ...src, id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
+      return [...prev.slice(0, idx + 1), clone, ...prev.slice(idx + 1)];
+    });
+  };
+  const clearRow = (idx: number) => {
+    setPlan((prev) =>
+      prev.map((r, i) =>
+        i === idx
+          ? { ...r, title: "", topic: "", webSearch: false, deepResearch: false }
+          : r,
+      ),
+    );
+  };
+  const deleteRow = (idx: number) =>
+    setPlan((prev) => prev.filter((_, i) => i !== idx));
+  const moveRow = (from: number, to: number) => {
+    if (from === to || to < 0) return;
+    setPlan((prev) => {
+      if (to >= prev.length) return prev;
+      const arr = [...prev];
+      const [item] = arr.splice(from, 1);
+      arr.splice(to, 0, item);
+      return arr;
+    });
+  };
+  const clearCell = (idx: number, key: keyof PlanRow) => {
+    setPlan((prev) =>
+      prev.map((r, i) => {
+        if (i !== idx) return r;
+        const empty: string | boolean =
+          typeof r[key] === "boolean" ? false : "";
+        return { ...r, [key]: empty } as PlanRow;
+      }),
+    );
+  };
+
 
   const [videoTheme, setVideoTheme] = useState("");
 
