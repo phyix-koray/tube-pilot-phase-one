@@ -540,7 +540,7 @@ export type PlanRow = {
 
 const FORMATS = ["Documentary", "Explainer", "Story", "Listicle", "Case study", "Debunk", "Timeline"];
 const ART_STYLES = ["Stickman", "Cinematic photoreal", "Vintage archival", "Minimal 2D motion", "Editorial noir", "Warm sunset realism", "Neo-noir illustration"];
-const LENGTHS = ["3–5 min", "5–10 min", "8–12 min", "10–15 min"];
+const LENGTHS = ["1–5 min", "6–10 min", "11–20 min", "21–40 min", "41–60 min", "60–90 min"];
 
 export function mockPlanRows(
   genre: string,
@@ -1280,12 +1280,18 @@ export function RunAgentWizard({
                     onClick={() => {
                       setPlanGenerating(true);
                       setTimeout(() => {
-                        setPlan(
-                          mockPlanRows(
-                            genre,
-                            mode === "weekly" ? "weekly" : "daily",
-                            mode === "weekly" ? 6 : 7,
-                          ),
+                        const n = plan.length || (mode === "weekly" ? 6 : 7);
+                        const fresh = mockPlanRows(
+                          genre,
+                          mode === "weekly" ? "weekly" : "daily",
+                          n,
+                        );
+                        setPlan((prev) =>
+                          fresh.map((f, i) => ({
+                            ...f,
+                            id: prev[i]?.id ?? f.id,
+                            date: prev[i]?.date ?? f.date,
+                          })),
                         );
                         setPlanGenerating(false);
                       }, 2200);
@@ -1293,7 +1299,36 @@ export function RunAgentWizard({
                     className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
                   >
                     <Sparkles className="w-3 h-3" />
-                    Regenerate
+                    Regenerate all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const emptyIdx = plan
+                        .map((r, i) => (!r.title.trim() || !r.topic.trim() ? i : -1))
+                        .filter((i) => i >= 0);
+                      if (emptyIdx.length === 0) return;
+                      setPlanGenerating(true);
+                      setTimeout(() => {
+                        const fresh = mockPlanRows(
+                          genre,
+                          mode === "weekly" ? "weekly" : "daily",
+                          plan.length,
+                        );
+                        setPlan((prev) =>
+                          prev.map((r, i) =>
+                            emptyIdx.includes(i)
+                              ? { ...fresh[i], id: r.id, date: r.date }
+                              : r,
+                          ),
+                        );
+                        setPlanGenerating(false);
+                      }, 1600);
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Regenerate empty
                   </button>
                   <button
                     type="button"
