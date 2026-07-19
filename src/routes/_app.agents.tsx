@@ -568,7 +568,7 @@ export function mockPlanRows(
       topic: p.topic,
       length: LENGTHS[i % LENGTHS.length],
       format: FORMATS[i % FORMATS.length],
-      artStyle: ART_STYLES[i % ART_STYLES.length],
+      artStyle: "Stickman",
       webSearch: true,
       deepResearch: i % 2 === 0,
     };
