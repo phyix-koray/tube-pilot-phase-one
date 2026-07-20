@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_CONFIG, isSupabaseConfigured } from "./config";
-import type { Database } from "./types";
+import type { Database } from "./database.types";
 
 /**
  * Browser Supabase client — publishable key + persisted session.
