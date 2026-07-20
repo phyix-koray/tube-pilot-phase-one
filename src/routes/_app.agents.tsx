@@ -2753,12 +2753,11 @@ function PlanReviewSummary({
       <div className="flex-1 min-w-0 space-y-2.5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-text-secondary">
           <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5"
-            style={{ borderColor: `${accent}55`, color: accent }}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-semibold text-[color:var(--tp-text-primary)]"
+            style={{ background: accent, color: "#0a0a0b" }}
           >
             <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: accent }}
+              className="w-1.5 h-1.5 rounded-full bg-black/70"
             />
             {plan.length} {mode === "weekly" ? "weeks" : "days"} scheduled
           </span>
