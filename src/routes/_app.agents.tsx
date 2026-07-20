@@ -1136,6 +1136,72 @@ export function RunAgentWizard({
                 as soon as it's ready for review.
               </p>
             </div>
+          ) : stepKey === "skills" ? (
+            <div className="space-y-3">
+              <div className="text-[13px] text-text-secondary">
+                Attach a skill file or write instructions. The agent will read
+                everything before continuing, then pre-fill the next steps for
+                you.
+              </div>
+              <AgentSkillsAttach agentId={agent.id} accent={accent} />
+              <div>
+                <div className="text-[12px] font-medium text-text-primary mb-1.5">
+                  Manual instructions{" "}
+                  <span className="text-text-tertiary font-normal">
+                    · optional
+                  </span>
+                </div>
+                <textarea
+                  value={manualInstructions}
+                  onChange={(e) => setManualInstructions(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. This is a finance channel focused on long-term investing. Keep the tone calm and educational."
+                  className="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-[13px] outline-none focus:border-text-primary resize-none"
+                />
+              </div>
+              {readingSkills ? (
+                <div
+                  className="rounded-lg border px-3 py-2.5 text-[13px] flex items-center gap-2"
+                  style={{ borderColor: accent, background: `${accent}18` }}
+                >
+                  <BookOpen className="w-3.5 h-3.5 animate-pulse" />
+                  Reading{attachedCount ? ` ${attachedCount} skill file${attachedCount === 1 ? "" : "s"}` : " your instructions"}…
+                </div>
+              ) : skillsApplied ? (
+                <div
+                  className="rounded-lg border px-3 py-2.5 text-[13px] flex items-center gap-2"
+                  style={{ borderColor: accent, background: `${accent}12` }}
+                >
+                  <Check className="w-3.5 h-3.5" style={{ color: accent }} />
+                  {skillsDetected ? (
+                    <>
+                      Applied — detected niche{" "}
+                      <span className="font-medium">{skillsDetected}</span>.
+                      Upcoming steps are pre-filled.
+                    </>
+                  ) : (
+                    <>Applied. Fill any remaining fields in the next steps.</>
+                  )}
+                </div>
+              ) : null}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={applySkills}
+                  disabled={readingSkills}
+                  className="inline-flex items-center gap-1.5 rounded-md px-3 h-8 text-[13px] font-medium text-[color:var(--tp-base)] disabled:opacity-60"
+                  style={{ backgroundColor: accent }}
+                >
+                  {readingSkills ? "Reading…" : "OK — apply & continue"}
+                </button>
+                <button
+                  onClick={next}
+                  disabled={readingSkills}
+                  className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2.5 h-8 text-[13px] text-text-secondary"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
           ) : stepKey === "channel" ? (
             <div className="space-y-3">
               <div className="text-[13px] text-text-secondary">
