@@ -132,10 +132,30 @@ function SkillCard({ s }: { s: SkillDoc }) {
 
   const open = () => navigate({ to: "/skills/$skillId", params: { skillId: s.id } });
 
+  const description =
+    s.description ??
+    (s.file.trim()
+      ? s.file.replace(/[#*_`>-]/g, "").trim().slice(0, 140)
+      : "Empty skill — open to start chatting.");
+
+  const onRename = () => {
+    const next = window.prompt("Rename skill", s.name);
+    if (next && next.trim()) renameSkill(s.id, next.trim());
+  };
+
+  const onRewriteDescription = () => {
+    // Mocked AI rewrite — synthesizes a short summary from the skill file.
+    const base = s.file.replace(/[#*_`>-]/g, "").replace(/\s+/g, " ").trim();
+    const summary = base
+      ? `Guides the assistant to ${base.slice(0, 120).toLowerCase()}${base.length > 120 ? "…" : ""}`
+      : `A reusable instruction file for ${s.name}. Open it to define what the AI should do.`;
+    setSkillDescription(s.id, summary);
+  };
+
   return (
     <div
       ref={rootRef}
-      className="relative rounded-xl bg-surface overflow-hidden card-shadow transition-transform hover:-translate-y-0.5 border border-subtle cursor-pointer"
+      className="relative rounded-xl bg-surface card-shadow transition-transform hover:-translate-y-0.5 border border-subtle cursor-pointer"
       onClick={open}
     >
       <div className="flex items-start gap-2.5 px-4 pt-4">
@@ -164,12 +184,12 @@ function SkillCard({ s }: { s: SkillDoc }) {
       </div>
 
       <p className="px-4 mt-2 pb-4 text-[12px] text-text-secondary line-clamp-2 min-h-[36px]">
-        {s.file.trim() ? s.file.replace(/[#*_`>-]/g, "").slice(0, 140) : "Empty skill — open to start chatting."}
+        {description}
       </p>
 
       {menu && (
         <div
-          className="absolute right-2 top-10 z-10 min-w-[160px] rounded-lg border border-subtle bg-surface card-shadow py-1 text-[13px]"
+          className="absolute right-2 top-11 z-30 min-w-[190px] rounded-lg border border-subtle bg-surface card-shadow py-1 text-[13px]"
           onClick={(e) => e.stopPropagation()}
         >
           <MenuItem
@@ -178,6 +198,22 @@ function SkillCard({ s }: { s: SkillDoc }) {
             onClick={() => {
               setMenu(false);
               open();
+            }}
+          />
+          <MenuItem
+            icon={<Pencil className="w-3.5 h-3.5" />}
+            label="Rename"
+            onClick={() => {
+              setMenu(false);
+              onRename();
+            }}
+          />
+          <MenuItem
+            icon={<Wand2 className="w-3.5 h-3.5" />}
+            label="Rewrite description"
+            onClick={() => {
+              setMenu(false);
+              onRewriteDescription();
             }}
           />
           <MenuItem
