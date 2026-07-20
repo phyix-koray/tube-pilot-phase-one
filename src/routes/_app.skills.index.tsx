@@ -7,12 +7,16 @@ import {
   Copy,
   Trash2,
   Settings2,
+  Pencil,
+  Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createSkill,
   deleteSkill,
   duplicateSkill,
+  renameSkill,
+  setSkillDescription,
   useSkills,
   type SkillDoc,
 } from "@/lib/skills-store";
