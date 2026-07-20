@@ -2961,4 +2961,152 @@ function PlanContextMenu({
   );
 }
 
+function AgentSkillsAttach({
+  agentId,
+  accent,
+}: {
+  agentId: string;
+  accent: string;
+}) {
+  const skills = useSkills();
+  const link = useAgentSkills(agentId);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setPickerOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [pickerOpen]);
+
+  const available = skills.filter((s) => !link.skillIds.includes(s.id));
+  const attachedSkills = link.skillIds
+    .map((id) => skills.find((s) => s.id === id))
+    .filter(Boolean);
+
+  const onFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = String(reader.result ?? "");
+      addUpload(agentId, file.name, content);
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div
+      ref={rootRef}
+      className="rounded-lg border border-subtle bg-surface p-3"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[13px] font-medium">
+          <BookOpen className="w-3.5 h-3.5" style={{ color: accent }} />
+          Skill files
+          <span className="text-text-tertiary font-normal">
+            · read before each run
+          </span>
+        </div>
+        <div className="flex items-center gap-1 relative">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".md,.txt,.json,.csv,.yaml,.yml,text/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onFile(f);
+              e.target.value = "";
+            }}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2 h-7 text-[12px] text-text-secondary"
+          >
+            <Paperclip className="w-3.5 h-3.5" />
+            Upload
+          </button>
+          <button
+            onClick={() => setPickerOpen((v) => !v)}
+            className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2 h-7 text-[12px] text-text-secondary"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            From Skills
+          </button>
+          {pickerOpen && (
+            <div className="absolute right-0 top-8 z-30 w-64 max-h-64 overflow-y-auto rounded-lg border border-subtle bg-surface card-shadow py-1 text-[13px]">
+              {available.length === 0 ? (
+                <div className="px-3 py-2 text-text-tertiary text-[12px]">
+                  No more skills to attach. Create one in Skills.
+                </div>
+              ) : (
+                available.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      attachSkill(agentId, s.id);
+                      setPickerOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-hover flex items-center gap-2"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-text-tertiary" />
+                    <span className="truncate">{s.name}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {attachedSkills.length === 0 && link.uploads.length === 0 ? (
+        <div className="mt-2 text-[12px] text-text-tertiary">
+          None attached. This agent will run on its defaults. Attach a skill to
+          shape its output.
+        </div>
+      ) : (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {attachedSkills.map((s) => (
+            <span
+              key={s!.id}
+              className="inline-flex items-center gap-1 rounded-md border border-subtle bg-raised pl-2 pr-1 h-6 text-[11.5px]"
+            >
+              <Sparkles className="w-3 h-3" style={{ color: accent }} />
+              <span className="truncate max-w-[160px]">{s!.name}</span>
+              <button
+                onClick={() => detachSkill(agentId, s!.id)}
+                className="ml-0.5 p-0.5 rounded hover:bg-hover text-text-tertiary"
+                aria-label="Detach"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          {link.uploads.map((u) => (
+            <span
+              key={u.id}
+              className="inline-flex items-center gap-1 rounded-md border border-subtle bg-raised pl-2 pr-1 h-6 text-[11.5px]"
+              title={`${u.content.length} chars`}
+            >
+              <FileText className="w-3 h-3" style={{ color: accent }} />
+              <span className="truncate max-w-[160px]">{u.name}</span>
+              <button
+                onClick={() => removeUpload(agentId, u.id)}
+                className="ml-0.5 p-0.5 rounded hover:bg-hover text-text-tertiary"
+                aria-label="Remove"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 
