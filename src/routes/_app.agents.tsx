@@ -978,24 +978,75 @@ export function RunAgentWizard({
   const attached = useAgentSkills(agent.id);
   const attachedCount = attached.skillIds.length + attached.uploads.length;
   const [readingSkills, setReadingSkills] = useState(false);
+  const [manualInstructions, setManualInstructions] = useState("");
+  const [skillsApplied, setSkillsApplied] = useState(false);
+  const [skillsDetected, setSkillsDetected] = useState<string | null>(null);
+  const skillDocs = useSkills();
+
+  const applySkills = () => {
+    setReadingSkills(true);
+    setTimeout(() => {
+      // Combine skill file contents + manual instructions to infer a niche/topic.
+      const combined = [
+        ...attached.skillIds
+          .map((id) => skillDocs.find((s) => s.id === id))
+          .filter(Boolean)
+          .map((s) => `${s!.name}\n${s!.file}`),
+        ...attached.uploads.map((u) => `${u.name}\n${u.content}`),
+        manualInstructions,
+      ]
+        .join("\n")
+        .toLowerCase();
+
+      const NICHES: Array<[string, string]> = [
+        ["finance", "finance"],
+        ["crypto", "crypto"],
+        ["invest", "finance"],
+        ["stock market", "finance"],
+        ["tech", "tech"],
+        ["ai ", "tech"],
+        ["gaming", "gaming"],
+        ["cook", "cooking"],
+        ["recipe", "cooking"],
+        ["travel", "travel"],
+        ["fitness", "fitness"],
+        ["workout", "fitness"],
+        ["music", "music"],
+        ["history", "history"],
+        ["motivation", "motivation"],
+        ["education", "education"],
+        ["science", "science"],
+        ["horror", "horror"],
+        ["true crime", "true crime"],
+      ];
+      const hit = NICHES.find(([k]) => combined.includes(k));
+      const detected = hit ? hit[1] : null;
+      setSkillsDetected(detected);
+
+      if (detected) {
+        if (isVideo) setGenre(detected);
+        if (isMusic) {
+          setThemeSource("manual");
+          setManualTheme(
+            `${detected.charAt(0).toUpperCase() + detected.slice(1)} — shaped by your skill file`,
+          );
+        }
+        setVideoTheme(detected);
+      }
+
+      setSkillsApplied(true);
+      setReadingSkills(false);
+      // auto-advance to next step
+      setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
+    }, 1400);
+  };
 
   const start = () => {
     setRunning(true);
-    if (attachedCount > 0) {
-      setReadingSkills(true);
-      setTimeout(() => {
-        setReadingSkills(false);
-        setTimeout(() => {
-          setRunning(false);
-          setDone(true);
-        }, 500);
-      }, 1400);
-    } else {
-      setTimeout(() => {
-        setRunning(false);
-        setDone(true);
-      }, 900);
-    }
+    setTimeout(() => {
+      setRunning(false);
+      setDone(true);
+    }, 900);
   };
 
 
