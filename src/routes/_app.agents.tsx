@@ -147,10 +147,23 @@ function AgentsPage() {
 
 function AgentCard({ w, onUse }: { w: Workflow; onUse: () => void }) {
   const accent = w.accent ?? "var(--tp-subtle)";
+  const [menu, setMenu] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menu) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setMenu(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [menu]);
+
   return (
     <div
+      ref={rootRef}
       className={cn(
-        "group rounded-xl bg-surface overflow-hidden card-shadow transition-transform hover:-translate-y-0.5",
+        "group relative rounded-xl bg-surface overflow-hidden card-shadow transition-transform hover:-translate-y-0.5",
         statusLeftBorder(w.status),
       )}
       style={{ border: `2px solid ${accent}` }}
@@ -172,6 +185,16 @@ function AgentCard({ w, onUse }: { w: Workflow; onUse: () => void }) {
             {w.steps.length} steps · Last run: {w.lastRun ?? "—"}
           </div>
         </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenu((v) => !v);
+          }}
+          className="p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover"
+          aria-label="More"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
       </div>
 
       <p className="px-5 mt-3 text-[13px] text-text-secondary line-clamp-2">
@@ -195,9 +218,35 @@ function AgentCard({ w, onUse }: { w: Workflow; onUse: () => void }) {
           Configure <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
+
+      {menu && (
+        <div className="absolute right-3 top-12 z-20 min-w-[160px] rounded-lg border border-subtle bg-surface card-shadow py-1 text-[13px]">
+          <Link
+            to="/agents/$agentId"
+            params={{ agentId: w.id }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left"
+            onClick={() => setMenu(false)}
+          >
+            <Settings2 className="w-3.5 h-3.5" /> Configure
+          </Link>
+          <button
+            onClick={() => setMenu(false)}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left"
+          >
+            <Copy className="w-3.5 h-3.5" /> Duplicate
+          </button>
+          <button
+            onClick={() => setMenu(false)}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-hover text-left text-red"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
+
 
 /* ============================================================
  * Run Agent — step-by-step wizard modal
