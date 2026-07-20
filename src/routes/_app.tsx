@@ -1,14 +1,36 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { PanelLeftOpen } from "lucide-react";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Loader2, PanelLeftOpen } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { useAuth } from "@/hooks/use-auth";
+import { isSupabaseConfigured } from "@/integrations/supabase/config";
 
 export const Route = createFileRoute("/_app")({
+  ssr: false,
   component: AppLayout,
 });
 
 function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const configured = isSupabaseConfigured();
+
+  useEffect(() => {
+    if (!configured) return;
+    if (!loading && !user) {
+      navigate({ to: "/auth" });
+    }
+  }, [loading, user, navigate, configured]);
+
+  if (configured && (loading || !user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-base">
+        <Loader2 className="w-5 h-5 animate-spin text-text-tertiary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-base text-text-primary">
       {!collapsed && <Sidebar onCollapse={() => setCollapsed(true)} />}
@@ -31,3 +53,4 @@ function AppLayout() {
     </div>
   );
 }
+
