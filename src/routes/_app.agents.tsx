@@ -1497,7 +1497,7 @@ export function RunAgentWizard({
                                 type="button"
                                 onClick={() => regenerateRow(idx)}
                                 title="Regenerate this row with AI"
-                                className="w-7 h-7 rounded-md opacity-40 group-hover:opacity-100 hover:bg-hover inline-flex items-center justify-center transition-opacity"
+                                className="w-7 h-7 rounded-md opacity-80 group-hover:opacity-100 hover:bg-hover inline-flex items-center justify-center transition-opacity"
                                 style={{ color: accent as string }}
                               >
                                 <Sparkles className="w-3.5 h-3.5" />
