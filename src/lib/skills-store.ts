@@ -10,6 +10,7 @@ export interface SkillMessage {
 export interface SkillDoc {
   id: string;
   name: string;
+  description?: string;
   createdAt: number;
   updatedAt: number;
   messages: SkillMessage[];
@@ -115,6 +116,13 @@ export function duplicateSkill(id: string): SkillDoc | null {
 export function renameSkill(id: string, name: string) {
   const list = read().map((s) =>
     s.id === id ? { ...s, name, updatedAt: Date.now() } : s,
+  );
+  write(list);
+}
+
+export function setSkillDescription(id: string, description: string) {
+  const list = read().map((s) =>
+    s.id === id ? { ...s, description, updatedAt: Date.now() } : s,
   );
   write(list);
 }
