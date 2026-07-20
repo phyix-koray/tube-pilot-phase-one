@@ -47,6 +47,8 @@ function SkillDetailPage() {
   const [menu, setMenu] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
 
   useEffect(() => {
     inputRef.current?.focus();
