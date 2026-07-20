@@ -17,6 +17,7 @@ import {
   Paperclip,
   FileText,
   BookOpen,
+  Check,
 } from "lucide-react";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -850,9 +851,11 @@ export function RunAgentWizard({
 
   const isRecurring = mode === "daily" || mode === "weekly";
 
+  const SKILLS_STEP: Step = { key: "skills", title: "Skills" };
   const RUN_STEPS: Step[] = isMusic
     ? [
         { key: "channel", title: "Channel" },
+        SKILLS_STEP,
         { key: "schedule", title: "Schedule" },
         ...(isRecurring
           ? [{ key: "theme", title: "Theme" } as Step]
@@ -866,6 +869,7 @@ export function RunAgentWizard({
       ? isRecurring
         ? [
             { key: "channel", title: "Channel" },
+            SKILLS_STEP,
             { key: "schedule", title: "Schedule" },
             { key: "theme", title: "Theme" },
             { key: "plan", title: "Content plan" },
@@ -873,6 +877,7 @@ export function RunAgentWizard({
           ]
         : [
             { key: "channel", title: "Channel" },
+            SKILLS_STEP,
             { key: "schedule", title: "Schedule" },
             { key: "topic", title: "Topic" },
             { key: "length", title: "Video length" },
@@ -880,6 +885,7 @@ export function RunAgentWizard({
           ]
       : [
           { key: "channel", title: "Channel" },
+          SKILLS_STEP,
           { key: "inputs", title: "Inputs" },
           { key: "schedule", title: "Schedule" },
           { key: "review", title: "Review" },
@@ -973,24 +979,75 @@ export function RunAgentWizard({
   const attached = useAgentSkills(agent.id);
   const attachedCount = attached.skillIds.length + attached.uploads.length;
   const [readingSkills, setReadingSkills] = useState(false);
+  const [manualInstructions, setManualInstructions] = useState("");
+  const [skillsApplied, setSkillsApplied] = useState(false);
+  const [skillsDetected, setSkillsDetected] = useState<string | null>(null);
+  const skillDocs = useSkills();
+
+  const applySkills = () => {
+    setReadingSkills(true);
+    setTimeout(() => {
+      // Combine skill file contents + manual instructions to infer a niche/topic.
+      const combined = [
+        ...attached.skillIds
+          .map((id) => skillDocs.find((s) => s.id === id))
+          .filter(Boolean)
+          .map((s) => `${s!.name}\n${s!.file}`),
+        ...attached.uploads.map((u) => `${u.name}\n${u.content}`),
+        manualInstructions,
+      ]
+        .join("\n")
+        .toLowerCase();
+
+      const NICHES: Array<[string, string]> = [
+        ["finance", "finance"],
+        ["crypto", "crypto"],
+        ["invest", "finance"],
+        ["stock market", "finance"],
+        ["tech", "tech"],
+        ["ai ", "tech"],
+        ["gaming", "gaming"],
+        ["cook", "cooking"],
+        ["recipe", "cooking"],
+        ["travel", "travel"],
+        ["fitness", "fitness"],
+        ["workout", "fitness"],
+        ["music", "music"],
+        ["history", "history"],
+        ["motivation", "motivation"],
+        ["education", "education"],
+        ["science", "science"],
+        ["horror", "horror"],
+        ["true crime", "true crime"],
+      ];
+      const hit = NICHES.find(([k]) => combined.includes(k));
+      const detected = hit ? hit[1] : null;
+      setSkillsDetected(detected);
+
+      if (detected) {
+        if (isVideo) setGenre(detected);
+        if (isMusic) {
+          setThemeSource("manual");
+          setManualTheme(
+            `${detected.charAt(0).toUpperCase() + detected.slice(1)} — shaped by your skill file`,
+          );
+        }
+        setVideoTheme(detected);
+      }
+
+      setSkillsApplied(true);
+      setReadingSkills(false);
+      // auto-advance to next step
+      setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
+    }, 1400);
+  };
 
   const start = () => {
     setRunning(true);
-    if (attachedCount > 0) {
-      setReadingSkills(true);
-      setTimeout(() => {
-        setReadingSkills(false);
-        setTimeout(() => {
-          setRunning(false);
-          setDone(true);
-        }, 500);
-      }, 1400);
-    } else {
-      setTimeout(() => {
-        setRunning(false);
-        setDone(true);
-      }, 900);
-    }
+    setTimeout(() => {
+      setRunning(false);
+      setDone(true);
+    }, 900);
   };
 
 
@@ -1079,6 +1136,72 @@ export function RunAgentWizard({
                 </Link>{" "}
                 as soon as it's ready for review.
               </p>
+            </div>
+          ) : stepKey === "skills" ? (
+            <div className="space-y-3">
+              <div className="text-[13px] text-text-secondary">
+                Attach a skill file or write instructions. The agent will read
+                everything before continuing, then pre-fill the next steps for
+                you.
+              </div>
+              <AgentSkillsAttach agentId={agent.id} accent={accent} />
+              <div>
+                <div className="text-[12px] font-medium text-text-primary mb-1.5">
+                  Manual instructions{" "}
+                  <span className="text-text-tertiary font-normal">
+                    · optional
+                  </span>
+                </div>
+                <textarea
+                  value={manualInstructions}
+                  onChange={(e) => setManualInstructions(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. This is a finance channel focused on long-term investing. Keep the tone calm and educational."
+                  className="w-full rounded-lg border border-subtle bg-surface px-3 py-2 text-[13px] outline-none focus:border-text-primary resize-none"
+                />
+              </div>
+              {readingSkills ? (
+                <div
+                  className="rounded-lg border px-3 py-2.5 text-[13px] flex items-center gap-2"
+                  style={{ borderColor: accent, background: `${accent}18` }}
+                >
+                  <BookOpen className="w-3.5 h-3.5 animate-pulse" />
+                  Reading{attachedCount ? ` ${attachedCount} skill file${attachedCount === 1 ? "" : "s"}` : " your instructions"}…
+                </div>
+              ) : skillsApplied ? (
+                <div
+                  className="rounded-lg border px-3 py-2.5 text-[13px] flex items-center gap-2"
+                  style={{ borderColor: accent, background: `${accent}12` }}
+                >
+                  <Check className="w-3.5 h-3.5" style={{ color: accent }} />
+                  {skillsDetected ? (
+                    <>
+                      Applied — detected niche{" "}
+                      <span className="font-medium">{skillsDetected}</span>.
+                      Upcoming steps are pre-filled.
+                    </>
+                  ) : (
+                    <>Applied. Fill any remaining fields in the next steps.</>
+                  )}
+                </div>
+              ) : null}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={applySkills}
+                  disabled={readingSkills}
+                  className="inline-flex items-center gap-1.5 rounded-md px-3 h-8 text-[13px] font-medium text-[color:var(--tp-base)] disabled:opacity-60"
+                  style={{ backgroundColor: accent }}
+                >
+                  {readingSkills ? "Reading…" : "OK — apply & continue"}
+                </button>
+                <button
+                  onClick={next}
+                  disabled={readingSkills}
+                  className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2.5 h-8 text-[13px] text-text-secondary"
+                >
+                  Skip
+                </button>
+              </div>
             </div>
           ) : stepKey === "channel" ? (
             <div className="space-y-3">
@@ -2444,15 +2567,14 @@ export function RunAgentWizard({
               <div className="text-[13px] text-text-secondary">
                 Review and confirm this run.
               </div>
-              <AgentSkillsAttach agentId={agent.id} accent={accent} />
-              {readingSkills && (
+              {skillsApplied && (
                 <div
-                  className="rounded-lg border px-3 py-2.5 text-[13px] flex items-center gap-2"
-                  style={{ borderColor: accent, background: `${accent}18` }}
+                  className="rounded-lg border px-3 py-2.5 text-[12px] flex items-center gap-2"
+                  style={{ borderColor: accent, background: `${accent}12` }}
                 >
-                  <BookOpen className="w-3.5 h-3.5 animate-pulse" />
-                  Reading {attachedCount} skill file
-                  {attachedCount === 1 ? "" : "s"}…
+                  <BookOpen className="w-3.5 h-3.5" style={{ color: accent }} />
+                  Skill file applied
+                  {skillsDetected ? ` · niche: ${skillsDetected}` : ""}
                 </div>
               )}
               <div className="rounded-lg bg-raised border border-subtle divide-y divide-subtle text-[13px]">
