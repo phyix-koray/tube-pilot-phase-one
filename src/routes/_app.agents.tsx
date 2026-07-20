@@ -970,13 +970,29 @@ export function RunAgentWizard({
   const next = () => setStep((s) => Math.min(s + 1, RUN_STEPS.length - 1));
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
+  const attached = useAgentSkills(agent.id);
+  const attachedCount = attached.skillIds.length + attached.uploads.length;
+  const [readingSkills, setReadingSkills] = useState(false);
+
   const start = () => {
     setRunning(true);
-    setTimeout(() => {
-      setRunning(false);
-      setDone(true);
-    }, 900);
+    if (attachedCount > 0) {
+      setReadingSkills(true);
+      setTimeout(() => {
+        setReadingSkills(false);
+        setTimeout(() => {
+          setRunning(false);
+          setDone(true);
+        }, 500);
+      }, 1400);
+    } else {
+      setTimeout(() => {
+        setRunning(false);
+        setDone(true);
+      }, 900);
+    }
   };
+
 
   const stepKey = RUN_STEPS[clampedStep].key;
 
