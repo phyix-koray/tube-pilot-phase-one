@@ -2567,15 +2567,14 @@ export function RunAgentWizard({
               <div className="text-[13px] text-text-secondary">
                 Review and confirm this run.
               </div>
-              <AgentSkillsAttach agentId={agent.id} accent={accent} />
-              {readingSkills && (
+              {skillsApplied && (
                 <div
-                  className="rounded-lg border px-3 py-2.5 text-[13px] flex items-center gap-2"
-                  style={{ borderColor: accent, background: `${accent}18` }}
+                  className="rounded-lg border px-3 py-2.5 text-[12px] flex items-center gap-2"
+                  style={{ borderColor: accent, background: `${accent}12` }}
                 >
-                  <BookOpen className="w-3.5 h-3.5 animate-pulse" />
-                  Reading {attachedCount} skill file
-                  {attachedCount === 1 ? "" : "s"}…
+                  <BookOpen className="w-3.5 h-3.5" style={{ color: accent }} />
+                  Skill file applied
+                  {skillsDetected ? ` · niche: ${skillsDetected}` : ""}
                 </div>
               )}
               <div className="rounded-lg bg-raised border border-subtle divide-y divide-subtle text-[13px]">
