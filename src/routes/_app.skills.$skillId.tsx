@@ -25,6 +25,7 @@ import {
   User as UserIcon,
   Wand2,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { mockSkills } from "@/mock/data";
 import { cn } from "@/lib/tp";
 
@@ -716,7 +717,7 @@ function Panel({
   fullHeight,
 }: {
   title: string;
-  icon: typeof Sparkles;
+  icon: LucideIcon;
   action?: string;
   children: React.ReactNode;
   fullHeight?: boolean;
