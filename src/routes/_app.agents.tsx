@@ -17,6 +17,7 @@ import {
   Paperclip,
   FileText,
   BookOpen,
+  Check,
 } from "lucide-react";
 
 import { useEffect, useMemo, useRef, useState } from "react";
