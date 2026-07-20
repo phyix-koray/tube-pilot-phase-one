@@ -360,80 +360,8 @@ export const mockVideos: Video[] = [
   },
 ];
 
-export const mockSkills: Skill[] = [
-  {
-    id: "script-writer-doc",
-    name: "Script Writer — Documentary",
-    category: "Documentary",
-    description:
-      "Guides the AI to write documentary-style scene transcripts with emotional hooks, pacing notes, and visual directions.",
-    usedIn: "AI Video Generator Agent (Step 4)",
-    lastEdited: "3 days ago",
-    instructions: `You are an expert documentary scriptwriter. Write for a 3-minute video split into 12–18 scenes.
+export const mockSkills: Skill[] = [];
 
-For each scene, output:
-- S### (scene number, zero-padded)
-- transcript: one 1–3 sentence narration line
-- image_prompt: a vivid still-frame description
-- video_prompt: optional 5s motion cue
-- pacing: fast | medium | slow
-
-Open with a hook. Layer stakes, then a turn, then a resolution. Never use filler words.`,
-  },
-  {
-    id: "thumb-art-director",
-    name: "Thumbnail Art Director — Luxury Interiors",
-    category: "Music",
-    description:
-      "Directs GPT Image to create luxury interior panoramic thumbnails matching the day's theme.",
-    usedIn: "Music Composer (Step 4)",
-    lastEdited: "1 week ago",
-    instructions: `Photorealistic 16:9 luxury interior with a panoramic city or nature view.
-Cinematic warm light, film grain, no visible text or people.`,
-  },
-  {
-    id: "yt-metadata-music",
-    name: "YouTube Metadata Writer — Music",
-    category: "Music",
-    description:
-      "Writes SEO-friendly titles, descriptions, and tags for ambient jazz music videos.",
-    usedIn: "Music Composer (Step 6)",
-    lastEdited: "2 days ago",
-    instructions: `Title: ≤100 chars, evocative location + mood + instrument.
-Description: 3 short paragraphs, timestamps, channel CTA.
-Tags: 15–25 comma-separated, ≤500 chars total.`,
-  },
-  {
-    id: "keyword-variation",
-    name: "Keyword Variation Generator — Suno",
-    category: "Music",
-    description:
-      "Produces varied Suno keyword sets so consecutive songs feel distinct within the same theme.",
-    usedIn: "Music Composer (Step 2)",
-    lastEdited: "5 days ago",
-    instructions: `Given a theme, output 10 keyword bundles. Each bundle: 4–6 tags across mood, tempo, instrument, era.`,
-  },
-  {
-    id: "topic-researcher",
-    name: "Topic Researcher — History Channel",
-    category: "Education",
-    description:
-      "Turns raw topic ideas into multi-source structured research briefs.",
-    usedIn: "AI Video Generator (Step 3)",
-    lastEdited: "2 weeks ago",
-    instructions: `Return a brief with: hook, key facts (with dates), tension, resolution, and 3 primary sources.`,
-  },
-  {
-    id: "viral-hook",
-    name: "Viral Hook Writer — Education",
-    category: "Education",
-    description:
-      "Cold-opens that keep the audience watching past the first 3 seconds.",
-    usedIn: "AI Video Generator (Step 4)",
-    lastEdited: "1 month ago",
-    instructions: `Write 5 first-line hooks under 12 words each. Prefer concrete nouns and a single surprising number.`,
-  },
-];
 
 // Video Editor scenes (for editor demo)
 export interface Scene {
