@@ -236,10 +236,42 @@ function SkillDetailPage() {
               className="w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] outline-none placeholder:text-text-tertiary"
             />
             <div className="flex items-center justify-between px-2 pb-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".md,.txt,.json,.csv,.yaml,.yml,text/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const content = String(reader.result ?? "");
+                    appendMessage(skill.id, {
+                      role: "user",
+                      content: `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB) — please fold this into the skill file.`,
+                    });
+                    setTimeout(() => {
+                      appendMessage(skill.id, {
+                        role: "assistant",
+                        content: `Loaded **${file.name}**. I merged it into your skill file — open the preview on the right to review.`,
+                      });
+                      const header = skill.file.trim()
+                        ? skill.file
+                        : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n`;
+                      const next = `${header}\n\n## From ${file.name}\n\n${content.trim()}\n`;
+                      updateSkillFile(skill.id, next);
+                    }, 400);
+                  };
+                  reader.readAsText(file);
+                  e.target.value = "";
+                }}
+              />
               <button
+                onClick={() => fileInputRef.current?.click()}
                 className="p-2 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover"
                 aria-label="Attach"
-                title="Attach a file — the AI will build your skill from it"
+                title="Attach a file — the AI will fold it into your skill"
               >
                 <Paperclip className="w-4 h-4" />
               </button>

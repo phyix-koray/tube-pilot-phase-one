@@ -132,11 +132,16 @@ function SkillCard({ s }: { s: SkillDoc }) {
 
   const open = () => navigate({ to: "/skills/$skillId", params: { skillId: s.id } });
 
-  const description =
+  const rawDescription =
     s.description ??
     (s.file.trim()
-      ? s.file.replace(/[#*_`>-]/g, "").trim().slice(0, 140)
+      ? s.file.replace(/[#*_`>-]/g, "").replace(/\s+/g, " ").trim()
       : "Empty skill — open to start chatting.");
+  const description =
+    rawDescription.length > 75
+      ? rawDescription.slice(0, 75).trimEnd() + "…"
+      : rawDescription;
+
 
   const onRename = () => {
     const next = window.prompt("Rename skill", s.name);
