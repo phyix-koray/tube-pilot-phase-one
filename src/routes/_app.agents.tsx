@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Settings2,
   Sparkles,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
