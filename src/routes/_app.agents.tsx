@@ -14,6 +14,9 @@ import {
   MoreHorizontal,
   Copy,
   Trash2,
+  Paperclip,
+  FileText,
+  BookOpen,
 } from "lucide-react";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +29,15 @@ import {
 } from "@/mock/data";
 import { cn } from "@/lib/tp";
 import { StepBar, type Step } from "@/components/StepFlow";
+import { useSkills } from "@/lib/skills-store";
+import {
+  useAgentSkills,
+  attachSkill,
+  detachSkill,
+  addUpload,
+  removeUpload,
+} from "@/lib/agent-skills-store";
+
 
 export const Route = createFileRoute("/_app/agents")({
   head: () => ({
