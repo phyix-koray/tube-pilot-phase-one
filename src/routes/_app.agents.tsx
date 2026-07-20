@@ -673,6 +673,7 @@ export function RunAgentWizard({
   // Recurring video plan (daily/weekly) — auto-generated editable table
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
+  const [planFullscreen, setPlanFullscreen] = useState(false);
   const planAutoGenRef = useRef(false);
   const DEFAULT_COL_WIDTHS = [36, 44, 128, 240, 360, 108, 148, 140, 64, 64, 44];
   const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS);
