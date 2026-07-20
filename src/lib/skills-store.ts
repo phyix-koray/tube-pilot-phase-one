@@ -10,6 +10,7 @@ export interface SkillMessage {
 export interface SkillDoc {
   id: string;
   name: string;
+  description?: string;
   createdAt: number;
   updatedAt: number;
   messages: SkillMessage[];
