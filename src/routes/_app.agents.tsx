@@ -11,7 +11,11 @@ import {
   Sparkles,
   Maximize2,
   Minimize2,
+  MoreHorizontal,
+  Copy,
+  Trash2,
 } from "lucide-react";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   mockChannels,
