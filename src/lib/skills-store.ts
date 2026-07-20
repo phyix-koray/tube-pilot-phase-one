@@ -120,6 +120,13 @@ export function renameSkill(id: string, name: string) {
   write(list);
 }
 
+export function setSkillDescription(id: string, description: string) {
+  const list = read().map((s) =>
+    s.id === id ? { ...s, description, updatedAt: Date.now() } : s,
+  );
+  write(list);
+}
+
 export function updateSkillFile(id: string, file: string) {
   const list = read().map((s) =>
     s.id === id ? { ...s, file, updatedAt: Date.now() } : s,
