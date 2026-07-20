@@ -98,7 +98,9 @@ function AgentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((w) => {
             const isVideoAgent =
-              w.id === "ai-video-generator" || w.id === "stock-video-generator";
+              w.id === "ai-video-generator" ||
+              w.id === "stock-video-generator" ||
+              w.id === "mix-video-generator";
             return (
               <AgentCard
                 key={w.id}
@@ -592,7 +594,9 @@ export function RunAgentWizard({
   const accent = agent.accent ?? "var(--tp-subtle)";
   const isMusic = agent.id === "music-composer";
   const isVideo =
-    agent.id === "ai-video-generator" || agent.id === "stock-video-generator";
+    agent.id === "ai-video-generator" ||
+    agent.id === "stock-video-generator" ||
+    agent.id === "mix-video-generator";
 
   const suggestedChannel =
     mockChannels.find((c) => c.usedIn?.includes(agent.name)) ?? mockChannels[0];
@@ -603,9 +607,9 @@ export function RunAgentWizard({
   const [prompt, setPrompt] = useState(
     isMusic
       ? "slow smooth jazz, saxophone, cozy ambient lounge"
-      : agent.id === "ai-video-generator"
-        ? "The Dam That Never Cracked — a 3-minute short doc about the Houston dam."
-        : "Top 5 underrated moments of the last World Cup.",
+      : agent.id === "stock-video-generator"
+        ? "Top 5 underrated moments of the last World Cup."
+        : "The Dam That Never Cracked — a 3-minute short doc about the Houston dam.",
   );
 
   // Music-specific — matches Suno terminal flow
