@@ -1,6 +1,7 @@
 import musicAvatar from "@/assets/music-agent.png.asset.json";
 import aiAvatar from "@/assets/ai-agent.png.asset.json";
 import stockAvatar from "@/assets/stock-agent.png.asset.json";
+import mixAvatar from "@/assets/mix-agent.png.asset.json";
 
 export type WorkflowStatus = "idle" | "running" | "scheduled" | "error";
 export type VideoStatus =
@@ -275,6 +276,19 @@ export const mockWorkflows: Workflow[] = [
     steps: documentarySteps,
     status: "idle",
     lastRun: "3 days ago",
+  },
+  {
+    id: "mix-video-generator",
+    name: "Mix: AI & Stock Video Generator Agent",
+    category: "mix",
+    icon: "Clapperboard",
+    avatar: mixAvatar.url,
+    accent: "#3ea1ff",
+    description:
+      "Best of both worlds — mixes AI-generated scenes with curated stock footage in a single pipeline, then researches, writes, renders and publishes.",
+    steps: documentarySteps,
+    status: "idle",
+    lastRun: "New",
   },
 ];
 

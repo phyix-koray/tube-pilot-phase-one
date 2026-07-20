@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Settings2,
   Sparkles,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -98,7 +100,9 @@ function AgentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((w) => {
             const isVideoAgent =
-              w.id === "ai-video-generator" || w.id === "stock-video-generator";
+              w.id === "ai-video-generator" ||
+              w.id === "stock-video-generator" ||
+              w.id === "mix-video-generator";
             return (
               <AgentCard
                 key={w.id}
@@ -592,7 +596,9 @@ export function RunAgentWizard({
   const accent = agent.accent ?? "var(--tp-subtle)";
   const isMusic = agent.id === "music-composer";
   const isVideo =
-    agent.id === "ai-video-generator" || agent.id === "stock-video-generator";
+    agent.id === "ai-video-generator" ||
+    agent.id === "stock-video-generator" ||
+    agent.id === "mix-video-generator";
 
   const suggestedChannel =
     mockChannels.find((c) => c.usedIn?.includes(agent.name)) ?? mockChannels[0];
@@ -603,9 +609,9 @@ export function RunAgentWizard({
   const [prompt, setPrompt] = useState(
     isMusic
       ? "slow smooth jazz, saxophone, cozy ambient lounge"
-      : agent.id === "ai-video-generator"
-        ? "The Dam That Never Cracked — a 3-minute short doc about the Houston dam."
-        : "Top 5 underrated moments of the last World Cup.",
+      : agent.id === "stock-video-generator"
+        ? "Top 5 underrated moments of the last World Cup."
+        : "The Dam That Never Cracked — a 3-minute short doc about the Houston dam.",
   );
 
   // Music-specific — matches Suno terminal flow
@@ -669,6 +675,7 @@ export function RunAgentWizard({
   // Recurring video plan (daily/weekly) — auto-generated editable table
   const [plan, setPlan] = useState<PlanRow[]>([]);
   const [planGenerating, setPlanGenerating] = useState(false);
+  const [planFullscreen, setPlanFullscreen] = useState(false);
   const planAutoGenRef = useRef(false);
   const DEFAULT_COL_WIDTHS = [36, 44, 128, 240, 360, 108, 148, 140, 64, 64, 44];
   const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COL_WIDTHS);
@@ -1266,7 +1273,13 @@ export function RunAgentWizard({
               )}
             </div>
           ) : stepKey === "plan" && isVideo ? (
-            <div className="space-y-4">
+            <div
+              className={cn(
+                "space-y-4",
+                planFullscreen &&
+                  "fixed inset-0 z-50 bg-base p-6 overflow-auto flex flex-col",
+              )}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="text-[12px] text-text-tertiary max-w-xl">
                   The agent has drafted a full {mode === "weekly" ? "6-week" : "7-day"} content plan
@@ -1296,9 +1309,9 @@ export function RunAgentWizard({
                         setPlanGenerating(false);
                       }, 2200);
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3.5 h-3.5" style={{ color: accent as string }} />
                     Regenerate all
                   </button>
                   <button
@@ -1325,9 +1338,9 @@ export function RunAgentWizard({
                         setPlanGenerating(false);
                       }, 1600);
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3.5 h-3.5" style={{ color: accent as string }} />
                     Regenerate empty
                   </button>
                   <button
@@ -1353,10 +1366,28 @@ export function RunAgentWizard({
                         },
                       ]);
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                     Add row
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlanFullscreen((v) => !v)}
+                    title={planFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
+                  >
+                    {planFullscreen ? (
+                      <>
+                        <Minimize2 className="w-3.5 h-3.5" />
+                        Exit
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="w-3.5 h-3.5" />
+                        Fullscreen
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1364,7 +1395,12 @@ export function RunAgentWizard({
               {planGenerating || plan.length === 0 ? (
                 <ThinkingBlock accent={accent} kind="plan" />
               ) : (
-                <div className="overflow-auto rounded-lg border border-subtle bg-raised/30 max-h-[560px]">
+                <div
+                  className={cn(
+                    "overflow-auto rounded-lg border border-subtle bg-raised/30",
+                    planFullscreen ? "flex-1" : "max-h-[560px]",
+                  )}
+                >
                   <table
                     className="text-[12px] border-separate border-spacing-0 table-fixed"
                     style={{ width: colWidths.reduce((a, b) => a + b, 0) }}
@@ -1461,7 +1497,7 @@ export function RunAgentWizard({
                                 type="button"
                                 onClick={() => regenerateRow(idx)}
                                 title="Regenerate this row with AI"
-                                className="w-7 h-7 rounded-md opacity-40 group-hover:opacity-100 hover:bg-hover inline-flex items-center justify-center transition-opacity"
+                                className="w-7 h-7 rounded-md opacity-80 group-hover:opacity-100 hover:bg-hover inline-flex items-center justify-center transition-opacity"
                                 style={{ color: accent as string }}
                               >
                                 <Sparkles className="w-3.5 h-3.5" />
@@ -2717,12 +2753,11 @@ function PlanReviewSummary({
       <div className="flex-1 min-w-0 space-y-2.5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-text-secondary">
           <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5"
-            style={{ borderColor: `${accent}55`, color: accent }}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-semibold text-[color:var(--tp-text-primary)]"
+            style={{ background: accent, color: "#0a0a0b" }}
           >
             <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: accent }}
+              className="w-1.5 h-1.5 rounded-full bg-black/70"
             />
             {plan.length} {mode === "weekly" ? "weeks" : "days"} scheduled
           </span>
