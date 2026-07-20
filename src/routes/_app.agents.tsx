@@ -1273,7 +1273,13 @@ export function RunAgentWizard({
               )}
             </div>
           ) : stepKey === "plan" && isVideo ? (
-            <div className="space-y-4">
+            <div
+              className={cn(
+                "space-y-4",
+                planFullscreen &&
+                  "fixed inset-0 z-50 bg-base p-6 overflow-auto flex flex-col",
+              )}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="text-[12px] text-text-tertiary max-w-xl">
                   The agent has drafted a full {mode === "weekly" ? "6-week" : "7-day"} content plan
@@ -1303,9 +1309,9 @@ export function RunAgentWizard({
                         setPlanGenerating(false);
                       }, 2200);
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3.5 h-3.5" style={{ color: accent as string }} />
                     Regenerate all
                   </button>
                   <button
@@ -1332,9 +1338,9 @@ export function RunAgentWizard({
                         setPlanGenerating(false);
                       }, 1600);
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3.5 h-3.5" style={{ color: accent as string }} />
                     Regenerate empty
                   </button>
                   <button
@@ -1360,10 +1366,28 @@ export function RunAgentWizard({
                         },
                       ]);
                     }}
-                    className="inline-flex items-center gap-1 text-[11px] text-text-secondary hover:text-text-primary rounded-md border border-subtle px-2 h-7"
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                     Add row
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlanFullscreen((v) => !v)}
+                    title={planFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-text-primary rounded-md border border-subtle bg-surface hover:bg-hover px-2.5 h-8"
+                  >
+                    {planFullscreen ? (
+                      <>
+                        <Minimize2 className="w-3.5 h-3.5" />
+                        Exit
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="w-3.5 h-3.5" />
+                        Fullscreen
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1371,7 +1395,12 @@ export function RunAgentWizard({
               {planGenerating || plan.length === 0 ? (
                 <ThinkingBlock accent={accent} kind="plan" />
               ) : (
-                <div className="overflow-auto rounded-lg border border-subtle bg-raised/30 max-h-[560px]">
+                <div
+                  className={cn(
+                    "overflow-auto rounded-lg border border-subtle bg-raised/30",
+                    planFullscreen ? "flex-1" : "max-h-[560px]",
+                  )}
+                >
                   <table
                     className="text-[12px] border-separate border-spacing-0 table-fixed"
                     style={{ width: colWidths.reduce((a, b) => a + b, 0) }}
