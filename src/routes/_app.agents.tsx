@@ -850,9 +850,11 @@ export function RunAgentWizard({
 
   const isRecurring = mode === "daily" || mode === "weekly";
 
+  const SKILLS_STEP: Step = { key: "skills", title: "Skills" };
   const RUN_STEPS: Step[] = isMusic
     ? [
         { key: "channel", title: "Channel" },
+        SKILLS_STEP,
         { key: "schedule", title: "Schedule" },
         ...(isRecurring
           ? [{ key: "theme", title: "Theme" } as Step]
@@ -866,6 +868,7 @@ export function RunAgentWizard({
       ? isRecurring
         ? [
             { key: "channel", title: "Channel" },
+            SKILLS_STEP,
             { key: "schedule", title: "Schedule" },
             { key: "theme", title: "Theme" },
             { key: "plan", title: "Content plan" },
@@ -873,6 +876,7 @@ export function RunAgentWizard({
           ]
         : [
             { key: "channel", title: "Channel" },
+            SKILLS_STEP,
             { key: "schedule", title: "Schedule" },
             { key: "topic", title: "Topic" },
             { key: "length", title: "Video length" },
@@ -880,6 +884,7 @@ export function RunAgentWizard({
           ]
       : [
           { key: "channel", title: "Channel" },
+          SKILLS_STEP,
           { key: "inputs", title: "Inputs" },
           { key: "schedule", title: "Schedule" },
           { key: "review", title: "Review" },
