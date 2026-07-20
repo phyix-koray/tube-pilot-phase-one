@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Sparkles, Search, ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { mockSkills, type Skill } from "@/mock/data";
 
-export const Route = createFileRoute("/_app/skills")({
+export const Route = createFileRoute("/_app/skills/")({
   head: () => ({
     meta: [
       { title: "Skills — TubePilot" },
