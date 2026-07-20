@@ -7,10 +7,13 @@ import {
   Settings as SettingsIcon,
   Zap,
   PanelLeftClose,
+  LogOut,
 } from "lucide-react";
 import { mockUser, mockWorkflows } from "@/mock/data";
 import { cn } from "@/lib/tp";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth, signOut } from "@/hooks/use-auth";
+
 
 const groups = [
   {
@@ -37,9 +40,11 @@ export function Sidebar({ onCollapse }: { onCollapse?: () => void } = {}) {
   const pathname = useRouterState({
     select: (s) => s.location.pathname,
   });
+  const { user } = useAuth();
   const anyRunning = mockWorkflows.some((w) => w.status === "running");
   const { credits, plan } = mockUser;
   const pct = Math.round((credits.used / credits.total) * 100);
+
   const barColor =
     pct >= 95
       ? "bg-red"
@@ -142,19 +147,26 @@ export function Sidebar({ onCollapse }: { onCollapse?: () => void } = {}) {
 
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full bg-blue/20 text-blue text-[11px] font-semibold flex items-center justify-center">
-            {mockUser.avatarInitials}
+            {(user?.email ?? mockUser.avatarInitials).slice(0, 2).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] text-text-primary truncate">
-              {mockUser.name}
+              {user?.user_metadata?.full_name || user?.email || mockUser.name}
             </div>
           </div>
           <ThemeToggle compact />
-          <span className="text-[10px] uppercase tracking-wide bg-raised text-text-secondary px-1.5 py-0.5 rounded">
-            {plan}
-          </span>
+          {user && (
+            <button
+              onClick={() => void signOut()}
+              title="Sign out"
+              className="p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </aside>
   );
 }
+
