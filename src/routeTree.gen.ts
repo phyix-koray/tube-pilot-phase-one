@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EditorVideoIdRouteImport } from './routes/editor.$videoId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as ApiChatSkillRouteImport } from './routes/api/chat-skill'
 import { Route as AppVideosRouteImport } from './routes/_app.videos'
 import { Route as AppSkillsRouteImport } from './routes/_app.skills'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
@@ -55,6 +56,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
   getParentRoute: () => AuthRoute,
+} as any)
+const ApiChatSkillRoute = ApiChatSkillRouteImport.update({
+  id: '/api/chat-skill',
+  path: '/api/chat-skill',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppVideosRoute = AppVideosRouteImport.update({
   id: '/videos',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/skills': typeof AppSkillsRouteWithChildren
   '/videos': typeof AppVideosRouteWithChildren
+  '/api/chat-skill': typeof ApiChatSkillRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
+  '/api/chat-skill': typeof ApiChatSkillRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/skills': typeof AppSkillsRouteWithChildren
   '/_app/videos': typeof AppVideosRouteWithChildren
+  '/api/chat-skill': typeof ApiChatSkillRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/_app/agents/$agentId': typeof AppAgentsAgentIdRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/skills'
     | '/videos'
+    | '/api/chat-skill'
     | '/auth/callback'
     | '/editor/$videoId'
     | '/agents/$agentId'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/agents'
     | '/channels'
     | '/settings'
+    | '/api/chat-skill'
     | '/auth/callback'
     | '/editor/$videoId'
     | '/agents/$agentId'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/skills'
     | '/_app/videos'
+    | '/api/chat-skill'
     | '/auth/callback'
     | '/editor/$videoId'
     | '/_app/agents/$agentId'
@@ -227,6 +239,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiChatSkillRoute: typeof ApiChatSkillRoute
   EditorVideoIdRoute: typeof EditorVideoIdRoute
 }
 
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/api/chat-skill': {
+      id: '/api/chat-skill'
+      path: '/api/chat-skill'
+      fullPath: '/api/chat-skill'
+      preLoaderRoute: typeof ApiChatSkillRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/videos': {
       id: '/_app/videos'
@@ -429,18 +449,9 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiChatSkillRoute: ApiChatSkillRoute,
   EditorVideoIdRoute: EditorVideoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
