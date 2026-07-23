@@ -526,52 +526,110 @@ function FilePreview({
   );
 }
 
-/** Minimal markdown renderer sufficient for headings, bullets, bold. */
-function renderMarkdown(src: string): string {
-  const esc = (s: string) =>
-    s
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  const lines = src.split("\n");
-  const out: string[] = [];
-  let inList = false;
-  const closeList = () => {
-    if (inList) {
-      out.push("</ul>");
-      inList = false;
-    }
-  };
-  for (const raw of lines) {
-    const line = raw.replace(/\r$/, "");
-    if (/^#\s+/.test(line)) {
-      closeList();
-      out.push(
-        `<h1 style="font-size:20px;font-weight:600;margin:16px 0 8px">${esc(line.replace(/^#\s+/, ""))}</h1>`,
-      );
-    } else if (/^##\s+/.test(line)) {
-      closeList();
-      out.push(
-        `<h2 style="font-size:16px;font-weight:600;margin:14px 0 6px">${esc(line.replace(/^##\s+/, ""))}</h2>`,
-      );
-    } else if (/^-\s+/.test(line)) {
-      if (!inList) {
-        out.push('<ul style="padding-left:1.1rem;margin:6px 0;list-style:disc">');
-        inList = true;
-      }
-      out.push(
-        `<li style="margin:2px 0">${esc(line.replace(/^-\s+/, "")).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</li>`,
-      );
-    } else if (line.trim() === "") {
-      closeList();
-      out.push("<div style='height:6px'></div>");
-    } else {
-      closeList();
-      out.push(
-        `<p style="margin:6px 0">${esc(line).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>`,
-      );
+function MarkdownView({ content, compact = false }: { content: string; compact?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "text-text-primary break-words",
+        compact ? "text-[14px] leading-relaxed" : "text-[14px] leading-7",
+      )}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => <h1 className="mt-1 mb-3 text-[22px] font-semibold tracking-tight">{children}</h1>,
+          h2: ({ children }) => <h2 className="mt-5 mb-2 text-[16px] font-semibold">{children}</h2>,
+          h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-[14px] font-semibold">{children}</h3>,
+          p: ({ children }) => <p className="my-2">{children}</p>,
+          ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1">{children}</ul>,
+          ol: ({ children }) => <ol className="my-2 ml-5 list-decimal space-y-1">{children}</ol>,
+          li: ({ children }) => <li className="pl-1">{children}</li>,
+          strong: ({ children }) => <strong className="font-semibold text-text-primary">{children}</strong>,
+          code: ({ children }) => (
+            <code className="rounded bg-raised px-1 py-0.5 font-mono text-[12px] text-text-primary">{children}</code>
+          ),
+          pre: ({ children }) => (
+            <pre className="my-3 max-h-80 overflow-auto rounded-lg border border-subtle bg-raised p-3 font-mono text-[12px] leading-5">
+              {children}
+            </pre>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="my-3 border-l-2 border-blue pl-3 text-text-secondary">{children}</blockquote>
+          ),
+          a: ({ href, children }) => (
+            <a className="text-blue hover:underline" href={href} target="_blank" rel="noreferrer">
+              {children}
+            </a>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+function cleanSkillFile(src: string): string {
+  return src
+    .trim()
+    .replace(/^```(?:markdown|md)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+}
+
+function extractSkillMarkdown(reply: string): string {
+  const fenced = reply.match(/```(?:markdown|md)?\s*([\s\S]*?)```/i);
+  if (fenced?.[1]?.trim()) return cleanSkillFile(fenced[1]);
+
+  const headingIndex = reply.search(/^#\s+/m);
+  if (headingIndex >= 0) return cleanSkillFile(reply.slice(headingIndex));
+
+  return "";
+}
+
+function mergeAttachmentIntoSkillFile({
+  currentFile,
+  fileName,
+  content,
+}: {
+  currentFile: string;
+  fileName: string;
+  content: string;
+}) {
+  const cleaned = cleanSkillFile(content);
+  if (/^#\s+/m.test(cleaned) && cleaned.length > currentFile.trim().length) {
+    return cleaned;
+  }
+  const base = cleanSkillFile(currentFile);
+  return `${base}\n\n## Attached source: ${fileName}\n\n\`\`\`text\n${content.trim()}\n\`\`\``.trim();
+}
+
+async function copyText(text: string) {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fall through to legacy copy path.
     }
   }
-  closeList();
-  return out.join("");
+  if (typeof document === "undefined") return false;
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const ok = document.execCommand("copy");
+  textarea.remove();
+  return ok;
+}
+
+function slugify(value: string) {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "skill";
 }
