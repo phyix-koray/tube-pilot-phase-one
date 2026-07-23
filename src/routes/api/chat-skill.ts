@@ -44,7 +44,10 @@ export const Route = createFileRoute("/api/chat-skill")({
             "```markdown",
             body.skillFile ?? "",
             "```",
-            `Keep answers concise and actionable. When the user asks for changes, describe them briefly — the app itself edits the skill file. Remember the entire prior conversation and never re-introduce yourself.`,
+            `Always read every uploaded attachment included in the conversation history. If the user uploaded a file, treat its full contents as source material for the skill file.`,
+            `When the user asks you to create, rewrite, improve, or fold an attachment into a skill file, return a short sentence followed by the complete updated skill file in one fenced markdown block.`,
+            `The fenced markdown block must start with a single H1 title and contain valid markdown only — never HTML, never escaped HTML, and never an empty file.`,
+            `When the user only asks a question, answer from the current skill file and attachments without re-introducing yourself. Remember the entire prior conversation.`,
           ].join("\n"),
         };
 
