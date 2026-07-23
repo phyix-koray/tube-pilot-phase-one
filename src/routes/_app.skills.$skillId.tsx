@@ -340,7 +340,7 @@ function SkillDetailPage() {
                 )}
                 <button
                   onClick={send}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || sending}
                   className="ml-1 inline-flex items-center justify-center w-8 h-8 rounded-full bg-text-primary text-[color:var(--tp-base)] disabled:opacity-30 hover:opacity-90"
                   aria-label="Send"
                 >
