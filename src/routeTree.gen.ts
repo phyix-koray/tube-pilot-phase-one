@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EditorVideoIdRouteImport } from './routes/editor.$videoId'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AppVideosRouteImport } from './routes/_app.videos'
 import { Route as AppSkillsRouteImport } from './routes/_app.skills'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
@@ -49,6 +50,11 @@ const EditorVideoIdRoute = EditorVideoIdRouteImport.update({
   id: '/editor/$videoId',
   path: '/editor/$videoId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AppVideosRoute = AppVideosRouteImport.update({
   id: '/videos',
@@ -108,13 +114,14 @@ const AppAgentsAgentIdRoute = AppAgentsAgentIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
   '/skills': typeof AppSkillsRouteWithChildren
   '/videos': typeof AppVideosRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/run/$agentId': typeof AppRunAgentIdRoute
@@ -125,11 +132,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/run/$agentId': typeof AppRunAgentIdRoute
@@ -142,13 +150,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/_app/agents': typeof AppAgentsRouteWithChildren
   '/_app/channels': typeof AppChannelsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/skills': typeof AppSkillsRouteWithChildren
   '/_app/videos': typeof AppVideosRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
   '/_app/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/_app/run/$agentId': typeof AppRunAgentIdRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/skills'
     | '/videos'
+    | '/auth/callback'
     | '/editor/$videoId'
     | '/agents/$agentId'
     | '/run/$agentId'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/agents'
     | '/channels'
     | '/settings'
+    | '/auth/callback'
     | '/editor/$videoId'
     | '/agents/$agentId'
     | '/run/$agentId'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/skills'
     | '/_app/videos'
+    | '/auth/callback'
     | '/editor/$videoId'
     | '/_app/agents/$agentId'
     | '/_app/run/$agentId'
@@ -213,7 +225,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   EditorVideoIdRoute: typeof EditorVideoIdRoute
 }
@@ -254,6 +266,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/editor/$videoId'
       preLoaderRoute: typeof EditorVideoIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_app/videos': {
       id: '/_app/videos'
@@ -395,10 +414,20 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   EditorVideoIdRoute: EditorVideoIdRoute,
 }
