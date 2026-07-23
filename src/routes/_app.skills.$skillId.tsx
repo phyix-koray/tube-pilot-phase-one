@@ -281,23 +281,49 @@ function SkillDetailPage() {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   const reader = new FileReader();
-                  reader.onload = () => {
+                  reader.onload = async () => {
                     const content = String(reader.result ?? "");
-                    appendMessage(skill.id, {
-                      role: "user",
-                      content: `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB) — please fold this into the skill file.`,
-                    });
-                    setTimeout(() => {
+                    const userMsg = `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB). Full contents:\n\n\`\`\`\n${content}\n\`\`\`\n\nFold this into the skill file and remember it for later questions.`;
+                    appendMessage(skill.id, { role: "user", content: userMsg });
+
+                    // Update the skill file immediately so preview reflects the upload.
+                    const header = skill.file.trim()
+                      ? skill.file
+                      : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n`;
+                    updateSkillFile(skill.id, `${header}\n\n## From ${file.name}\n\n${content.trim()}\n`);
+
+                    // Call real AI with full history + file content.
+                    const history = [
+                      ...skill.messages.map((m) => ({ role: m.role, content: m.content })),
+                      { role: "user" as const, content: userMsg },
+                    ];
+                    setSending(true);
+                    try {
+                      const res = await fetch("/api/chat-skill", {
+                        method: "POST",
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({
+                          messages: history,
+                          model,
+                          skillName: skill.name,
+                          skillFile: skill.file,
+                        }),
+                      });
+                      const data = (await res.json()) as { content?: string; error?: string };
                       appendMessage(skill.id, {
                         role: "assistant",
-                        content: `Loaded **${file.name}**. I merged it into your skill file — open the preview on the right to review.`,
+                        content: !res.ok || data.error
+                          ? `⚠️ ${data.error ?? "Request failed"}`
+                          : data.content ?? "(empty response)",
                       });
-                      const header = skill.file.trim()
-                        ? skill.file
-                        : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n`;
-                      const next = `${header}\n\n## From ${file.name}\n\n${content.trim()}\n`;
-                      updateSkillFile(skill.id, next);
-                    }, 400);
+                    } catch (err) {
+                      appendMessage(skill.id, {
+                        role: "assistant",
+                        content: `⚠️ Network error: ${(err as Error).message}`,
+                      });
+                    } finally {
+                      setSending(false);
+                    }
                   };
                   reader.readAsText(file);
                   e.target.value = "";
