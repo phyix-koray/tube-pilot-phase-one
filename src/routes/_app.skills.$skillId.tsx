@@ -270,7 +270,7 @@ function SkillDetailPage() {
                         : "bg-transparent text-text-primary",
                     )}
                   >
-                    {m.content}
+                    <MarkdownView content={m.content} compact={m.role === "user"} />
                     {m.role === "assistant" && skill.file && (
                       <button
                         onClick={() => setPreview(true)}
