@@ -69,23 +69,57 @@ function SkillDetailPage() {
 
   const hasMessages = skill.messages.length > 0;
 
-  const send = () => {
+  const [sending, setSending] = useState(false);
+
+  const send = async () => {
     const text = input.trim();
-    if (!text) return;
+    if (!text || sending) return;
     appendMessage(skill.id, { role: "user", content: text });
     setInput("");
-    // mock AI response + skill file growth
-    setTimeout(() => {
-      const reply =
-        "Understood. I've updated your skill file with these rules and kept everything in one clean document. Open the file preview on the right to review.";
-      appendMessage(skill.id, { role: "assistant", content: reply });
+    setSending(true);
 
-      const header = skill.file.trim()
-        ? skill.file
-        : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n\n## Rules\n`;
-      const next = `${header}\n- ${text}`;
-      updateSkillFile(skill.id, next);
-    }, 500);
+    // Build full history (including the just-appended user message).
+    const history = [
+      ...skill.messages.map((m) => ({ role: m.role, content: m.content })),
+      { role: "user" as const, content: text },
+    ];
+
+    try {
+      const res = await fetch("/api/chat-skill", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: history,
+          model,
+          skillName: skill.name,
+          skillFile: skill.file,
+        }),
+      });
+      const data = (await res.json()) as { content?: string; error?: string };
+      if (!res.ok || data.error) {
+        appendMessage(skill.id, {
+          role: "assistant",
+          content: `⚠️ ${data.error ?? "Request failed"}`,
+        });
+      } else {
+        const reply = data.content ?? "(empty response)";
+        appendMessage(skill.id, { role: "assistant", content: reply });
+
+        // Also fold the user's latest instruction into the skill file so the
+        // markdown preview keeps growing alongside the conversation.
+        const header = skill.file.trim()
+          ? skill.file
+          : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n\n## Rules\n`;
+        updateSkillFile(skill.id, `${header}\n- ${text}`);
+      }
+    } catch (err) {
+      appendMessage(skill.id, {
+        role: "assistant",
+        content: `⚠️ Network error: ${(err as Error).message}`,
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -306,7 +340,7 @@ function SkillDetailPage() {
                 )}
                 <button
                   onClick={send}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || sending}
                   className="ml-1 inline-flex items-center justify-center w-8 h-8 rounded-full bg-text-primary text-[color:var(--tp-base)] disabled:opacity-30 hover:opacity-90"
                   aria-label="Send"
                 >
