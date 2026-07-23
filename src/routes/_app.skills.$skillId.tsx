@@ -19,6 +19,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  addAttachment,
   appendMessage,
   deleteSkill,
   getSkill,
@@ -102,6 +103,7 @@ function SkillDetailPage() {
           model,
           skillName: current.name,
           skillFile: skillFileOverride ?? current.file,
+          attachments: current.attachments ?? [],
         }),
       });
       const data = (await res.json()) as { content?: string; error?: string };
@@ -324,7 +326,13 @@ function SkillDetailPage() {
                   const reader = new FileReader();
                   reader.onload = async () => {
                     const content = String(reader.result ?? "");
-                    const userMsg = `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB). Full contents:\n\n\`\`\`\n${content}\n\`\`\`\n\nRead this attachment carefully, fold the relevant instructions into the skill file, and remember it for later questions.`;
+                    addAttachment(skill.id, {
+                      name: file.name,
+                      type: file.type || "text/plain",
+                      size: file.size,
+                      content,
+                    });
+                    const userMsg = `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB).\n\nRead this attachment carefully, fold the relevant instructions into the skill file, and remember it for later questions.`;
                     appendMessage(skill.id, { role: "user", content: userMsg });
 
                     const latest = getSkill(skill.id);
@@ -339,8 +347,9 @@ function SkillDetailPage() {
                         content,
                       });
                       updateSkillFile(skill.id, nextFile);
+                      const latestWithAttachment = getSkill(skill.id);
                       await askSkillAi({
-                        skillFileOverride: nextFile,
+                        skillFileOverride: latestWithAttachment?.file ?? nextFile,
                       });
                     } catch (err) {
                       appendMessage(skill.id, {
