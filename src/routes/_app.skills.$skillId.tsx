@@ -447,16 +447,38 @@ function FilePreview({
   file: string;
   onClose: () => void;
 }) {
-  const html = useMemo(() => renderMarkdown(file), [file]);
+  const normalizedFile = useMemo(() => cleanSkillFile(file), [file]);
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  const copy = () => {
-    if (typeof navigator !== "undefined") {
-      navigator.clipboard?.writeText(file);
+  const copy = async () => {
+    const ok = await copyText(normalizedFile);
+    if (ok) {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1400);
     }
   };
 
+  const download = () => {
+    if (typeof document === "undefined") return;
+    const blob = new Blob([normalizedFile], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slugify(name)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <aside className="w-[460px] xl:w-[520px] shrink-0 border-l border-subtle bg-surface flex flex-col">
+    <aside
+      className={cn(
+        "shrink-0 border-l border-subtle bg-surface flex flex-col",
+        expanded ? "fixed inset-0 z-50 w-auto border-l-0" : "w-[460px] xl:w-[520px]",
+      )}
+    >
       <div className="flex items-center gap-2 h-12 px-3 border-b border-subtle">
         <FileText className="w-4 h-4 text-text-secondary" />
         <div className="text-[13px] font-medium truncate flex-1">
@@ -464,14 +486,22 @@ function FilePreview({
         </div>
         <button
           onClick={copy}
-          className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2 h-7 text-[12px] text-text-secondary"
+          className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2 h-7 text-[12px] text-text-secondary hover:text-text-primary"
         >
-          <Copy className="w-3.5 h-3.5" />
-          Copy
+          {copied ? <Check className="w-3.5 h-3.5 text-green" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? "Copied" : "Copy"}
         </button>
         <button
-          className="p-1.5 rounded-md hover:bg-hover text-text-tertiary"
-          aria-label="Expand"
+          onClick={download}
+          className="inline-flex items-center gap-1 rounded-md hover:bg-hover px-2 h-7 text-[12px] text-text-secondary hover:text-text-primary"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Download
+        </button>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="p-1.5 rounded-md hover:bg-hover text-text-tertiary hover:text-text-primary"
+          aria-label={expanded ? "Collapse" : "Expand"}
         >
           <Expand className="w-3.5 h-3.5" />
         </button>
@@ -483,12 +513,9 @@ function FilePreview({
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto px-6 py-6 prose-md">
-        {file.trim() ? (
-          <div
-            className="text-[14px] leading-relaxed text-text-primary"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+      <div className={cn("flex-1 overflow-y-auto px-6 py-6", expanded && "max-w-4xl w-full mx-auto")}>
+        {normalizedFile.trim() ? (
+          <MarkdownView content={normalizedFile} />
         ) : (
           <div className="text-[13px] text-text-tertiary">
             The skill file is empty. Send a message to start shaping it.
