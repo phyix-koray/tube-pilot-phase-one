@@ -7,6 +7,15 @@ export interface SkillMessage {
   ts: number;
 }
 
+export interface SkillAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  content: string;
+  ts: number;
+}
+
 export interface SkillDoc {
   id: string;
   name: string;
@@ -14,6 +23,7 @@ export interface SkillDoc {
   createdAt: number;
   updatedAt: number;
   messages: SkillMessage[];
+  attachments?: SkillAttachment[];
   /** current skill file (markdown) — grows as the user chats */
   file: string;
 }
@@ -92,6 +102,7 @@ export function createSkill(name = "Untitled skill"): SkillDoc {
     createdAt: now,
     updatedAt: now,
     messages: [],
+    attachments: [],
     file: "",
   };
   write([skill, ...read()]);
@@ -147,6 +158,26 @@ export function appendMessage(id: string, msg: Omit<SkillMessage, "id" | "ts">) 
       ...msg,
     };
     return { ...s, messages: [...s.messages, message], updatedAt: Date.now() };
+  });
+  write(list);
+}
+
+export function addAttachment(
+  id: string,
+  attachment: Omit<SkillAttachment, "id" | "ts">,
+) {
+  const list = read().map((s) => {
+    if (s.id !== id) return s;
+    const nextAttachment: SkillAttachment = {
+      id: uid(),
+      ts: Date.now(),
+      ...attachment,
+    };
+    return {
+      ...s,
+      attachments: [...(s.attachments ?? []), nextAttachment],
+      updatedAt: Date.now(),
+    };
   });
   write(list);
 }

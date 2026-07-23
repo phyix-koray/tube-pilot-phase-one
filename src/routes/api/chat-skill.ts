@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
+type SkillAttachment = {
+  name: string;
+  type?: string;
+  size?: number;
+  content: string;
+};
 
 const MODEL_MAP: Record<string, string> = {
   "claude-sonnet-5": "openai/gpt-5.4-mini", // via gateway fallback; see below
@@ -30,9 +36,28 @@ export const Route = createFileRoute("/api/chat-skill")({
           model?: string;
           skillName?: string;
           skillFile?: string;
+          attachments?: SkillAttachment[];
         };
 
         const model = MODEL_MAP[body.model ?? ""] ?? "google/gemini-3.6-flash";
+        const attachments = Array.isArray(body.attachments)
+          ? body.attachments.filter((attachment) => attachment.content.trim())
+          : [];
+        const attachmentContext = attachments.length
+          ? [
+              `Uploaded attachments available to read:`,
+              ...attachments.map((attachment, index) =>
+                [
+                  `Attachment ${index + 1}: ${attachment.name}`,
+                  `Type: ${attachment.type ?? "text/plain"}`,
+                  `Size: ${attachment.size ?? attachment.content.length} bytes`,
+                  "```text",
+                  attachment.content,
+                  "```",
+                ].join("\n"),
+              ),
+            ].join("\n\n")
+          : `No uploaded attachments yet.`;
 
         const system: ChatMsg = {
           role: "system",
@@ -44,7 +69,11 @@ export const Route = createFileRoute("/api/chat-skill")({
             "```markdown",
             body.skillFile ?? "",
             "```",
-            `Keep answers concise and actionable. When the user asks for changes, describe them briefly — the app itself edits the skill file. Remember the entire prior conversation and never re-introduce yourself.`,
+            attachmentContext,
+            `Always read every uploaded attachment included in the conversation history. If the user uploaded a file, treat its full contents as source material for the skill file.`,
+            `When the user asks you to create, rewrite, improve, or fold an attachment into a skill file, return a short sentence followed by the complete updated skill file in one fenced markdown block.`,
+            `The fenced markdown block must start with a single H1 title and contain valid markdown only — never HTML, never escaped HTML, and never an empty file.`,
+            `When the user only asks a question, answer from the current skill file and attachments without re-introducing yourself. Remember the entire prior conversation.`,
           ].join("\n"),
         };
 
