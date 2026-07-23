@@ -67,18 +67,13 @@ function SkillDetailPage() {
   }, [skill?.messages.length]);
 
   const askSkillAi = async ({
-    userText,
     skillFileOverride,
   }: {
-    userText: string;
     skillFileOverride?: string;
   }) => {
     const current = getSkill(skillId);
     if (!current) return;
-    const history = [
-      ...current.messages.map((m) => ({ role: m.role, content: m.content })),
-      { role: "user" as const, content: userText },
-    ];
+    const history = current.messages.map((m) => ({ role: m.role, content: m.content }));
     try {
       const res = await fetch("/api/chat-skill", {
         method: "POST",
@@ -126,7 +121,7 @@ function SkillDetailPage() {
     updateSkillFile(current.id, nextFile);
 
     try {
-      await askSkillAi({ userText: text, skillFileOverride: nextFile });
+      await askSkillAi({ skillFileOverride: nextFile });
     } finally {
       setSending(false);
       requestAnimationFrame(() => inputRef.current?.focus());
@@ -319,19 +314,11 @@ function SkillDetailPage() {
                     const header = skill.file.trim()
                       ? skill.file
                       : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n`;
-                    updateSkillFile(skill.id, `${header}\n\n## From ${file.name}\n\n${content.trim()}\n`);
-
-                    // Call real AI with full history + file content.
-                    const history = [
-                      ...skill.messages.map((m) => ({ role: m.role, content: m.content })),
-                      { role: "user" as const, content: userMsg },
-                    ];
                     setSending(true);
                     try {
                       const nextFile = `${header}\n\n## From ${file.name}\n\n${content.trim()}\n`;
                       updateSkillFile(skill.id, nextFile);
                       await askSkillAi({
-                        userText: userMsg,
                         skillFileOverride: nextFile,
                       });
                     } catch (err) {
