@@ -5,11 +5,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { useAuth } from "@/hooks/use-auth";
 
+const STABLE_PREVIEW_ORIGIN = "https://id-preview--8db88b69-8506-49ff-8cd0-b364e65e7f30.lovable.app";
+
+function getOAuthRedirectUrl() {
+  const origin = window.location.origin.endsWith(".lovableproject.com")
+    ? STABLE_PREVIEW_ORIGIN
+    : window.location.origin;
+
+  return `${origin}/auth/callback`;
+}
+
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — TubePilot" },
       { name: "description", content: "Sign in or create your TubePilot account." },
+      { property: "og:title", content: "Sign in — TubePilot" },
+      { property: "og:description", content: "Sign in or create your TubePilot account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AuthPage,
@@ -73,7 +87,10 @@ function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth` },
+        options: {
+          redirectTo: getOAuthRedirectUrl(),
+          queryParams: { prompt: "select_account" },
+        },
       });
       if (error) throw error;
     } catch (e: unknown) {
