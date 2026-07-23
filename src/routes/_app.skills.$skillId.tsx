@@ -2,8 +2,10 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowUp,
+  Check,
   ChevronDown,
   Copy,
+  Download,
   Expand,
   FileText,
   MoreHorizontal,
@@ -14,6 +16,8 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   appendMessage,
   deleteSkill,
@@ -26,7 +30,22 @@ import {
 import { cn } from "@/lib/tp";
 
 export const Route = createFileRoute("/_app/skills/$skillId")({
-  head: () => ({ meta: [{ title: "Skill — TubePilot" }] }),
+  head: () => ({
+    meta: [
+      { title: "Skill Builder — TubePilot" },
+      {
+        name: "description",
+        content: "Build, preview, copy, and download reusable AI skill documents.",
+      },
+      { property: "og:title", content: "Skill Builder — TubePilot" },
+      {
+        property: "og:description",
+        content: "Build reusable TubePilot AI skill documents through chat.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: SkillDetailPage,
 });
 
