@@ -113,6 +113,10 @@ function SkillDetailPage() {
       } else {
         const reply = data.content ?? "(empty response)";
         appendMessage(current.id, { role: "assistant", content: reply });
+        const nextSkillFile = extractSkillMarkdown(reply);
+        if (nextSkillFile.trim()) {
+          updateSkillFile(current.id, nextSkillFile);
+        }
       }
     } catch (err) {
       const message = `Network error: ${(err as Error).message}`;
@@ -133,14 +137,8 @@ function SkillDetailPage() {
     setInput("");
     setSending(true);
 
-    const header = current.file.trim()
-      ? current.file
-      : `# ${current.name}\n\nThis skill guides the AI when generating content for your agents.\n\n## Rules\n`;
-    const nextFile = `${header}\n- ${text}`;
-    updateSkillFile(current.id, nextFile);
-
     try {
-      await askSkillAi({ skillFileOverride: nextFile });
+      await askSkillAi({ skillFileOverride: current.file });
     } finally {
       setSending(false);
       requestAnimationFrame(() => inputRef.current?.focus());
