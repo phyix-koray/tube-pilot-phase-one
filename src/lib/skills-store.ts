@@ -76,6 +76,10 @@ export function useSkill(id: string): SkillDoc | undefined {
   return useSkills().find((s) => s.id === id);
 }
 
+export function getSkill(id: string): SkillDoc | undefined {
+  return read().find((s) => s.id === id);
+}
+
 function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
@@ -143,6 +147,20 @@ export function appendMessage(id: string, msg: Omit<SkillMessage, "id" | "ts">) 
       ...msg,
     };
     return { ...s, messages: [...s.messages, message], updatedAt: Date.now() };
+  });
+  write(list);
+}
+
+export function removeLegacyMockMessages(id: string) {
+  const legacyMock =
+    "Understood. I've updated your skill file with these rules and kept everything in one clean document. Open the file preview on the right to review.";
+  const list = read().map((s) => {
+    if (s.id !== id) return s;
+    const messages = s.messages.filter(
+      (m) => !(m.role === "assistant" && m.content.trim() === legacyMock),
+    );
+    if (messages.length === s.messages.length) return s;
+    return { ...s, messages, updatedAt: Date.now() };
   });
   write(list);
 }

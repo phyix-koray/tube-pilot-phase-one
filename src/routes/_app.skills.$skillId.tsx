@@ -17,7 +17,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   appendMessage,
   deleteSkill,
+  getSkill,
   renameSkill,
+  removeLegacyMockMessages,
   updateSkillFile,
   useSkill,
 } from "@/lib/skills-store";
@@ -45,6 +47,8 @@ function SkillDetailPage() {
   const [preview, setPreview] = useState(false);
   const [titleEdit, setTitleEdit] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -55,8 +59,79 @@ function SkillDetailPage() {
   }, [skillId]);
 
   useEffect(() => {
+    removeLegacyMockMessages(skillId);
+  }, [skillId]);
+
+  useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [skill?.messages.length]);
+
+  const askSkillAi = async ({
+    userText,
+    skillFileOverride,
+  }: {
+    userText: string;
+    skillFileOverride?: string;
+  }) => {
+    const current = getSkill(skillId);
+    if (!current) return;
+    const history = [
+      ...current.messages.map((m) => ({ role: m.role, content: m.content })),
+      { role: "user" as const, content: userText },
+    ];
+    try {
+      const res = await fetch("/api/chat-skill", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: history,
+          model,
+          skillName: current.name,
+          skillFile: skillFileOverride ?? current.file,
+        }),
+      });
+      const data = (await res.json()) as { content?: string; error?: string };
+      if (!res.ok || data.error) {
+        appendMessage(current.id, {
+          role: "assistant",
+          content: `⚠️ ${data.error ?? "Request failed"}`,
+        });
+      } else {
+        const reply = data.content ?? "(empty response)";
+        appendMessage(current.id, { role: "assistant", content: reply });
+      }
+    } catch (err) {
+      const message = `Network error: ${(err as Error).message}`;
+      setError(message);
+      appendMessage(current.id, {
+        role: "assistant",
+        content: `⚠️ ${message}`,
+      });
+    }
+  };
+
+  const send = async () => {
+    const text = input.trim();
+    const current = getSkill(skillId);
+    if (!text || sending || !current) return;
+    setError(null);
+    appendMessage(current.id, { role: "user", content: text });
+    setInput("");
+    setSending(true);
+
+    const header = current.file.trim()
+      ? current.file
+      : `# ${current.name}\n\nThis skill guides the AI when generating content for your agents.\n\n## Rules\n`;
+    const nextFile = `${header}\n- ${text}`;
+    updateSkillFile(current.id, nextFile);
+
+    try {
+      await askSkillAi({ userText: text, skillFileOverride: nextFile });
+    } finally {
+      setSending(false);
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  };
 
   if (!skill) {
     return (
@@ -68,59 +143,6 @@ function SkillDetailPage() {
   }
 
   const hasMessages = skill.messages.length > 0;
-
-  const [sending, setSending] = useState(false);
-
-  const send = async () => {
-    const text = input.trim();
-    if (!text || sending) return;
-    appendMessage(skill.id, { role: "user", content: text });
-    setInput("");
-    setSending(true);
-
-    // Build full history (including the just-appended user message).
-    const history = [
-      ...skill.messages.map((m) => ({ role: m.role, content: m.content })),
-      { role: "user" as const, content: text },
-    ];
-
-    try {
-      const res = await fetch("/api/chat-skill", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          messages: history,
-          model,
-          skillName: skill.name,
-          skillFile: skill.file,
-        }),
-      });
-      const data = (await res.json()) as { content?: string; error?: string };
-      if (!res.ok || data.error) {
-        appendMessage(skill.id, {
-          role: "assistant",
-          content: `⚠️ ${data.error ?? "Request failed"}`,
-        });
-      } else {
-        const reply = data.content ?? "(empty response)";
-        appendMessage(skill.id, { role: "assistant", content: reply });
-
-        // Also fold the user's latest instruction into the skill file so the
-        // markdown preview keeps growing alongside the conversation.
-        const header = skill.file.trim()
-          ? skill.file
-          : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n\n## Rules\n`;
-        updateSkillFile(skill.id, `${header}\n- ${text}`);
-      }
-    } catch (err) {
-      appendMessage(skill.id, {
-        role: "assistant",
-        content: `⚠️ Network error: ${(err as Error).message}`,
-      });
-    } finally {
-      setSending(false);
-    }
-  };
 
   return (
     <div className="-mx-4 md:-mx-8 -my-6 md:-my-8 flex h-[calc(100vh-0px)]">
@@ -250,6 +272,13 @@ function SkillDetailPage() {
                   </div>
                 </div>
               ))}
+              {sending && (
+                <div className="flex justify-start text-[14px] leading-relaxed">
+                  <div className="rounded-2xl px-4 py-2.5 bg-transparent text-text-secondary">
+                    Thinking…
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -299,22 +328,11 @@ function SkillDetailPage() {
                     ];
                     setSending(true);
                     try {
-                      const res = await fetch("/api/chat-skill", {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
-                        body: JSON.stringify({
-                          messages: history,
-                          model,
-                          skillName: skill.name,
-                          skillFile: skill.file,
-                        }),
-                      });
-                      const data = (await res.json()) as { content?: string; error?: string };
-                      appendMessage(skill.id, {
-                        role: "assistant",
-                        content: !res.ok || data.error
-                          ? `⚠️ ${data.error ?? "Request failed"}`
-                          : data.content ?? "(empty response)",
+                      const nextFile = `${header}\n\n## From ${file.name}\n\n${content.trim()}\n`;
+                      updateSkillFile(skill.id, nextFile);
+                      await askSkillAi({
+                        userText: userMsg,
+                        skillFileOverride: nextFile,
                       });
                     } catch (err) {
                       appendMessage(skill.id, {
@@ -323,6 +341,7 @@ function SkillDetailPage() {
                       });
                     } finally {
                       setSending(false);
+                      requestAnimationFrame(() => inputRef.current?.focus());
                     }
                   };
                   reader.readAsText(file);
@@ -376,7 +395,7 @@ function SkillDetailPage() {
             </div>
           </div>
           <div className="max-w-[720px] mx-auto text-center text-[12px] text-text-tertiary mt-2">
-            AI references this skill file every time an agent uses it.
+            {error ? `⚠️ ${error}` : "AI references this skill file every time an agent uses it."}
           </div>
         </div>
       </div>
