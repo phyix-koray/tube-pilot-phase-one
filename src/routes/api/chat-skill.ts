@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/chat-skill")({
             headers: {
               "content-type": "application/json",
               "Lovable-API-Key": key,
-              "X-Lovable-AIG-SDK": "tube-pilot-skill-chat",
+              "X-Lovable-AIG-SDK": "vercel-ai-sdk",
             },
             body: JSON.stringify({
               model,
