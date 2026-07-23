@@ -324,16 +324,20 @@ function SkillDetailPage() {
                   const reader = new FileReader();
                   reader.onload = async () => {
                     const content = String(reader.result ?? "");
-                    const userMsg = `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB). Full contents:\n\n\`\`\`\n${content}\n\`\`\`\n\nFold this into the skill file and remember it for later questions.`;
+                    const userMsg = `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB). Full contents:\n\n\`\`\`\n${content}\n\`\`\`\n\nRead this attachment carefully, fold the relevant instructions into the skill file, and remember it for later questions.`;
                     appendMessage(skill.id, { role: "user", content: userMsg });
 
-                    // Update the skill file immediately so preview reflects the upload.
-                    const header = skill.file.trim()
-                      ? skill.file
+                    const latest = getSkill(skill.id);
+                    const header = latest?.file.trim()
+                      ? latest.file
                       : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n`;
                     setSending(true);
                     try {
-                      const nextFile = `${header}\n\n## From ${file.name}\n\n${content.trim()}\n`;
+                      const nextFile = mergeAttachmentIntoSkillFile({
+                        currentFile: header,
+                        fileName: file.name,
+                        content,
+                      });
                       updateSkillFile(skill.id, nextFile);
                       await askSkillAi({
                         skillFileOverride: nextFile,
@@ -347,6 +351,12 @@ function SkillDetailPage() {
                       setSending(false);
                       requestAnimationFrame(() => inputRef.current?.focus());
                     }
+                  };
+                  reader.onerror = () => {
+                    appendMessage(skill.id, {
+                      role: "assistant",
+                      content: `⚠️ Could not read ${file.name}. Please upload a text, markdown, CSV, JSON, or YAML file.`,
+                    });
                   };
                   reader.readAsText(file);
                   e.target.value = "";
