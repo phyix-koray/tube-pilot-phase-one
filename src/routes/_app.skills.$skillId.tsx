@@ -24,6 +24,7 @@ import {
   deleteSkill,
   getSkill,
   renameSkill,
+  removeAttachment,
   removeLegacyMockMessages,
   updateSkillFile,
   useSkill,
