@@ -96,7 +96,8 @@ function SkillDetailPage() {
     if (!current) return;
     const history = current.messages.map((m) => ({ role: m.role, content: m.content }));
     try {
-      const res = await fetch("/api/chat-skill", {
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:3000";
+      const res = await fetch(`${BACKEND_URL}/api/chat-skill`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
