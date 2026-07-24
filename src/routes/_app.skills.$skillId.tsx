@@ -24,6 +24,7 @@ import {
   deleteSkill,
   getSkill,
   renameSkill,
+  removeAttachment,
   removeLegacyMockMessages,
   updateSkillFile,
   useSkill,
@@ -266,7 +267,7 @@ function SkillDetailPage() {
                 >
                   <div
                     className={cn(
-                      "rounded-2xl px-4 py-2.5 max-w-[85%] whitespace-pre-wrap",
+                      "rounded-2xl px-4 py-2.5 max-w-[85%]",
                       m.role === "user"
                         ? "bg-raised text-text-primary"
                         : "bg-transparent text-text-primary",
@@ -300,6 +301,27 @@ function SkillDetailPage() {
         {/* Composer */}
         <div className="px-6 pb-6">
           <div className="max-w-[720px] mx-auto rounded-2xl border border-subtle bg-surface card-shadow">
+            {(skill.attachments?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-1.5 px-3 pt-3">
+                {skill.attachments!.map((a) => (
+                  <span
+                    key={a.id}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-raised px-2 py-1 text-[12px] text-text-secondary"
+                  >
+                    <Paperclip className="w-3 h-3" />
+                    <span className="max-w-[180px] truncate">{a.name}</span>
+                    <span className="text-text-tertiary">· {Math.max(1, Math.round(a.size / 1024))} KB</span>
+                    <button
+                      onClick={() => removeAttachment(skill.id, a.id)}
+                      className="ml-0.5 text-text-tertiary hover:text-text-primary"
+                      aria-label={`Remove ${a.name}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
             <textarea
               ref={inputRef}
               value={input}
@@ -324,7 +346,7 @@ function SkillDetailPage() {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   const reader = new FileReader();
-                  reader.onload = async () => {
+                  reader.onload = () => {
                     const content = String(reader.result ?? "");
                     addAttachment(skill.id, {
                       name: file.name,
@@ -332,40 +354,10 @@ function SkillDetailPage() {
                       size: file.size,
                       content,
                     });
-                    const userMsg = `📎 Attached **${file.name}** (${Math.round(file.size / 100) / 10} KB).\n\nRead this attachment carefully, fold the relevant instructions into the skill file, and remember it for later questions.`;
-                    appendMessage(skill.id, { role: "user", content: userMsg });
-
-                    const latest = getSkill(skill.id);
-                    const header = latest?.file.trim()
-                      ? latest.file
-                      : `# ${skill.name}\n\nThis skill guides the AI when generating content for your agents.\n`;
-                    setSending(true);
-                    try {
-                      const nextFile = mergeAttachmentIntoSkillFile({
-                        currentFile: header,
-                        fileName: file.name,
-                        content,
-                      });
-                      updateSkillFile(skill.id, nextFile);
-                      const latestWithAttachment = getSkill(skill.id);
-                      await askSkillAi({
-                        skillFileOverride: latestWithAttachment?.file ?? nextFile,
-                      });
-                    } catch (err) {
-                      appendMessage(skill.id, {
-                        role: "assistant",
-                        content: `⚠️ Network error: ${(err as Error).message}`,
-                      });
-                    } finally {
-                      setSending(false);
-                      requestAnimationFrame(() => inputRef.current?.focus());
-                    }
+                    requestAnimationFrame(() => inputRef.current?.focus());
                   };
                   reader.onerror = () => {
-                    appendMessage(skill.id, {
-                      role: "assistant",
-                      content: `⚠️ Could not read ${file.name}. Please upload a text, markdown, CSV, JSON, or YAML file.`,
-                    });
+                    setError(`Could not read ${file.name}. Please upload a text, markdown, CSV, JSON, or YAML file.`);
                   };
                   reader.readAsText(file);
                   e.target.value = "";
@@ -375,7 +367,7 @@ function SkillDetailPage() {
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2 rounded-md text-text-tertiary hover:text-text-primary hover:bg-hover"
                 aria-label="Attach"
-                title="Attach a file — the AI will fold it into your skill"
+                title="Attach a file — the AI reads it when you send your next message"
               >
                 <Paperclip className="w-4 h-4" />
               </button>
@@ -596,22 +588,6 @@ function extractSkillMarkdown(reply: string): string {
   return "";
 }
 
-function mergeAttachmentIntoSkillFile({
-  currentFile,
-  fileName,
-  content,
-}: {
-  currentFile: string;
-  fileName: string;
-  content: string;
-}) {
-  const cleaned = cleanSkillFile(content);
-  if (/^#\s+/m.test(cleaned) && cleaned.length > currentFile.trim().length) {
-    return cleaned;
-  }
-  const base = cleanSkillFile(currentFile);
-  return `${base}\n\n## Attached source: ${fileName}\n\n\`\`\`text\n${content.trim()}\n\`\`\``.trim();
-}
 
 async function copyText(text: string) {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
