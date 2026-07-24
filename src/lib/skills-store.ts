@@ -182,6 +182,18 @@ export function addAttachment(
   write(list);
 }
 
+export function removeAttachment(id: string, attachmentId: string) {
+  const list = read().map((s) => {
+    if (s.id !== id) return s;
+    return {
+      ...s,
+      attachments: (s.attachments ?? []).filter((a) => a.id !== attachmentId),
+      updatedAt: Date.now(),
+    };
+  });
+  write(list);
+}
+
 export function removeLegacyMockMessages(id: string) {
   const legacyMock =
     "Understood. I've updated your skill file with these rules and kept everything in one clean document. Open the file preview on the right to review.";
