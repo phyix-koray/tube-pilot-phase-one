@@ -588,22 +588,6 @@ function extractSkillMarkdown(reply: string): string {
   return "";
 }
 
-function mergeAttachmentIntoSkillFile({
-  currentFile,
-  fileName,
-  content,
-}: {
-  currentFile: string;
-  fileName: string;
-  content: string;
-}) {
-  const cleaned = cleanSkillFile(content);
-  if (/^#\s+/m.test(cleaned) && cleaned.length > currentFile.trim().length) {
-    return cleaned;
-  }
-  const base = cleanSkillFile(currentFile);
-  return `${base}\n\n## Attached source: ${fileName}\n\n\`\`\`text\n${content.trim()}\n\`\`\``.trim();
-}
 
 async function copyText(text: string) {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
