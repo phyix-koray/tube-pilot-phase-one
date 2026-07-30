@@ -1,7 +1,9 @@
-import musicAvatar from "@/assets/music-agent.png.asset.json";
-import aiAvatar from "@/assets/ai-agent.png.asset.json";
-import stockAvatar from "@/assets/stock-agent.png.asset.json";
-import mixAvatar from "@/assets/mix-agent.png.asset.json";
+// Agent avatarları artık public/agents/ altında yerel dosya olarak duruyor,
+// Lovable'ın barındırdığı asset servisine bağımlı değil.
+const musicAvatar = { url: "/agents/music-agent.png" };
+const aiAvatar = { url: "/agents/ai-agent.png" };
+const stockAvatar = { url: "/agents/stock-agent.png" };
+const mixAvatar = { url: "/agents/mix-agent.png" };
 
 export type WorkflowStatus = "idle" | "running" | "scheduled" | "error";
 export type VideoStatus =

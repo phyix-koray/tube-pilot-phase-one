@@ -21,6 +21,7 @@ import remarkGfm from "remark-gfm";
 import {
   addAttachment,
   appendMessage,
+  clearAttachments,
   deleteSkill,
   getSkill,
   renameSkill,
@@ -51,21 +52,106 @@ export const Route = createFileRoute("/_app/skills/$skillId")({
   component: SkillDetailPage,
 });
 
+type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max";
+
+const EFFORT_LABELS: Record<EffortLevel, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  xhigh: "X-High",
+  max: "Max",
+};
+
 const MODELS = [
-  { id: "claude-sonnet-5", label: "Sonnet 5" },
-  { id: "claude-opus-5", label: "Opus 5" },
-  { id: "gpt-5.6", label: "GPT-5.6" },
-  { id: "gemini-3-pro", label: "Gemini 3 Pro" },
+  {
+    id: "claude-sonnet-5",
+    label: "Claude Sonnet 5",
+    group: "Anthropic",
+    thinkingMode: "adaptive-effort" as const,
+    efforts: ["low", "medium", "high", "xhigh", "max"] as EffortLevel[],
+    defaultEffort: "high" as EffortLevel,
+  },
+  {
+    id: "claude-opus-5",
+    label: "Claude Opus 5",
+    group: "Anthropic",
+    thinkingMode: "adaptive-effort" as const,
+    efforts: ["low", "medium", "high", "xhigh", "max"] as EffortLevel[],
+    defaultEffort: "high" as EffortLevel,
+  },
+  {
+    id: "claude-sonnet-4.5",
+    label: "Claude Sonnet 4.5",
+    group: "Anthropic",
+    // Bu model gerçek açık/kapalı thinking toggle'ı destekliyor (Sonnet 5'te bu mümkün değil).
+    thinkingMode: "toggle-budget" as const,
+    efforts: ["low", "medium", "high"] as EffortLevel[],
+    defaultEffort: "medium" as EffortLevel,
+  },
+  {
+    id: "gpt-5.6-sol",
+    label: "GPT-5.6 Sol",
+    group: "OpenAI",
+    thinkingMode: "adaptive-effort" as const,
+    efforts: ["low", "medium", "high", "xhigh", "max"] as EffortLevel[],
+    defaultEffort: "medium" as EffortLevel,
+  },
+  {
+    id: "gpt-5.6-terra",
+    label: "GPT-5.6 Terra",
+    group: "OpenAI",
+    thinkingMode: "adaptive-effort" as const,
+    efforts: ["low", "medium", "high", "xhigh", "max"] as EffortLevel[],
+    defaultEffort: "medium" as EffortLevel,
+  },
+  {
+    id: "gpt-5.6-luna",
+    label: "GPT-5.6 Luna",
+    group: "OpenAI",
+    thinkingMode: "adaptive-effort" as const,
+    efforts: ["low", "medium", "high"] as EffortLevel[],
+    defaultEffort: "medium" as EffortLevel,
+  },
+  {
+    id: "gemini-3.1-pro",
+    label: "Gemini 3.1 Pro",
+    group: "Google",
+    thinkingMode: "adaptive-effort" as const,
+    efforts: ["low", "medium", "high"] as EffortLevel[],
+    defaultEffort: "high" as EffortLevel,
+  },
+  {
+    id: "gemini-3-flash",
+    label: "Gemini 3 Flash",
+    group: "Google",
+    thinkingMode: "adaptive-effort" as const,
+    efforts: ["low", "medium", "high"] as EffortLevel[],
+    defaultEffort: "medium" as EffortLevel,
+  },
 ] as const;
+
+type ModelId = (typeof MODELS)[number]["id"];
+
 
 function SkillDetailPage() {
   const { skillId } = useParams({ from: "/_app/skills/$skillId" });
   const skill = useSkill(skillId);
 
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<(typeof MODELS)[number]["id"]>("claude-sonnet-5");
+  const [model, setModel] = useState<ModelId>("claude-sonnet-4.5");
+  const [effort, setEffort] = useState<EffortLevel>("medium");
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
-  const [preview, setPreview] = useState(false);
+  const [effortOpen, setEffortOpen] = useState(false);
+
+  const currentModel = MODELS.find((m) => m.id === model) ?? MODELS[0];
+
+  const selectModel = (id: ModelId) => {
+    setModel(id);
+    const found = MODELS.find((m) => m.id === id);
+    if (found) setEffort(found.defaultEffort);
+  };
+  const [preview, setPreview] = useState<{ name: string; content: string } | null>(null);
   const [titleEdit, setTitleEdit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [sending, setSending] = useState(false);
@@ -89,12 +175,25 @@ function SkillDetailPage() {
 
   const askSkillAi = async ({
     skillFileOverride,
+    attachmentsOverride,
   }: {
     skillFileOverride?: string;
+    attachmentsOverride?: NonNullable<ReturnType<typeof getSkill>>["attachments"];
   }) => {
     const current = getSkill(skillId);
     if (!current) return;
     const history = current.messages.map((m) => ({ role: m.role, content: m.content }));
+
+    // Konuşma boyunca herhangi bir mesajla yüklenmiş tüm dosyaları topluyoruz,
+    // böylece AI önceki turlarda yüklenen bir dosyayı da hatırlayabiliyor —
+    // sadece o anki mesaja eklenmiş attachment'ları değil.
+    const attachmentsFromHistory = current.messages.flatMap((m) => m.attachments ?? []);
+    const allAttachments = [...attachmentsFromHistory, ...(attachmentsOverride ?? current.attachments ?? [])];
+    // Aynı isimde birden fazla kez yüklendiyse en son hâlini tut.
+    const dedupedAttachments = Array.from(
+      new Map(allAttachments.map((a) => [a.name, a])).values(),
+    );
+
     try {
       const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:3000";
       const res = await fetch(`${BACKEND_URL}/api/chat-skill`, {
@@ -103,9 +202,11 @@ function SkillDetailPage() {
         body: JSON.stringify({
           messages: history,
           model,
+          effort,
+          thinkingEnabled,
           skillName: current.name,
           skillFile: skillFileOverride ?? current.file,
-          attachments: current.attachments ?? [],
+          attachments: dedupedAttachments,
         }),
       });
       const data = (await res.json()) as { content?: string; error?: string };
@@ -116,8 +217,11 @@ function SkillDetailPage() {
         });
       } else {
         const reply = data.content ?? "(empty response)";
-        appendMessage(current.id, { role: "assistant", content: reply });
         const nextSkillFile = extractSkillMarkdown(reply);
+        const chatText = nextSkillFile.trim()
+          ? stripSkillFileFromReply(reply) || "Skill dosyası güncellendi."
+          : reply;
+        appendMessage(current.id, { role: "assistant", content: chatText });
         if (nextSkillFile.trim()) {
           updateSkillFile(current.id, nextSkillFile);
         }
@@ -137,12 +241,21 @@ function SkillDetailPage() {
     const current = getSkill(skillId);
     if (!text || sending || !current) return;
     setError(null);
-    appendMessage(current.id, { role: "user", content: text });
+
+    const pendingAttachments = current.attachments ?? [];
+    appendMessage(current.id, {
+      role: "user",
+      content: text,
+      attachments: pendingAttachments.length ? pendingAttachments : undefined,
+    });
     setInput("");
+    if (pendingAttachments.length) {
+      clearAttachments(current.id);
+    }
     setSending(true);
 
     try {
-      await askSkillAi({ skillFileOverride: current.file });
+      await askSkillAi({ skillFileOverride: current.file, attachmentsOverride: pendingAttachments });
     } finally {
       setSending(false);
       requestAnimationFrame(() => inputRef.current?.focus());
@@ -275,9 +388,23 @@ function SkillDetailPage() {
                     )}
                   >
                     <MarkdownView content={m.content} compact={m.role === "user"} />
+                    {m.role === "user" && (m.attachments?.length ?? 0) > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5 justify-end">
+                        {m.attachments!.map((a) => (
+                          <button
+                            key={a.id}
+                            onClick={() => setPreview({ name: a.name, content: a.content })}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface hover:bg-hover px-2 py-1 text-[12px] text-text-secondary hover:text-text-primary"
+                          >
+                            <Paperclip className="w-3 h-3" />
+                            <span className="max-w-[180px] truncate">{a.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {m.role === "assistant" && skill.file && (
                       <button
-                        onClick={() => setPreview(true)}
+                        onClick={() => setPreview({ name: skill.name, content: skill.file })}
                         className="mt-3 flex items-center gap-2 rounded-lg border border-subtle bg-surface hover:bg-hover px-3 py-2 text-[12px]"
                       >
                         <FileText className="w-3.5 h-3.5" />
@@ -310,7 +437,12 @@ function SkillDetailPage() {
                     className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-raised px-2 py-1 text-[12px] text-text-secondary"
                   >
                     <Paperclip className="w-3 h-3" />
-                    <span className="max-w-[180px] truncate">{a.name}</span>
+                    <button
+                      onClick={() => setPreview({ name: a.name, content: a.content })}
+                      className="max-w-[180px] truncate hover:text-text-primary hover:underline"
+                    >
+                      {a.name}
+                    </button>
                     <span className="text-text-tertiary">· {Math.max(1, Math.round(a.size / 1024))} KB</span>
                     <button
                       onClick={() => removeAttachment(skill.id, a.id)}
@@ -381,23 +513,81 @@ function SkillDetailPage() {
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
                 {modelOpen && (
-                  <div className="absolute right-0 bottom-9 min-w-[160px] rounded-lg border border-subtle bg-surface card-shadow py-1 text-[13px] z-20">
-                    {MODELS.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          setModel(m.id);
-                          setModelOpen(false);
-                        }}
-                        className={cn(
-                          "w-full text-left px-3 py-1.5 hover:bg-hover",
-                          m.id === model && "text-blue",
-                        )}
-                      >
-                        {m.label}
-                      </button>
+                  <div className="absolute right-0 bottom-9 min-w-[200px] rounded-lg border border-subtle bg-surface card-shadow py-1 text-[13px] z-20">
+                    {(["Anthropic", "OpenAI", "Google"] as const).map((group, gi) => (
+                      <div key={group}>
+                        {gi > 0 && <div className="my-1 border-t border-subtle" />}
+                        <div className="px-3 pt-1.5 pb-1 text-[11px] font-medium text-text-tertiary">
+                          {group}
+                        </div>
+                        {MODELS.filter((m) => m.group === group).map((m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => {
+                              selectModel(m.id);
+                              setModelOpen(false);
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 py-1.5 hover:bg-hover",
+                              m.id === model && "text-blue",
+                            )}
+                          >
+                            {m.label}
+                          </button>
+                        ))}
+                      </div>
                     ))}
                   </div>
+                )}
+                {currentModel.thinkingMode === "toggle-budget" && (
+                  <button
+                    onClick={() => setThinkingEnabled((v) => !v)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-2 h-8 text-[12px]",
+                      thinkingEnabled ? "text-blue" : "text-text-tertiary",
+                      "hover:bg-hover",
+                    )}
+                    title={thinkingEnabled ? "Thinking açık — kapatmak için tıkla" : "Thinking kapalı — açmak için tıkla"}
+                  >
+                    <span
+                      className={cn(
+                        "inline-block w-2 h-2 rounded-full",
+                        thinkingEnabled ? "bg-blue" : "bg-text-tertiary",
+                      )}
+                    />
+                    Thinking
+                  </button>
+                )}
+                {(currentModel.thinkingMode === "adaptive-effort" || thinkingEnabled) && (
+                  <>
+                    <button
+                      onClick={() => setEffortOpen((v) => !v)}
+                      className="inline-flex items-center gap-1 rounded-md px-2 h-8 text-[12px] text-text-secondary hover:bg-hover"
+                      title="Reasoning effort"
+                    >
+                      {EFFORT_LABELS[effort]}
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                    {effortOpen && (
+                      <div className="absolute right-0 bottom-9 min-w-[120px] rounded-lg border border-subtle bg-surface card-shadow py-1 text-[13px] z-20">
+                        {currentModel.efforts.map((e) => (
+                          <button
+                            key={e}
+                            onClick={() => {
+                              setEffort(e);
+                              setEffortOpen(false);
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 py-1.5 hover:bg-hover",
+                              e === effort && "text-blue",
+                            )}
+                          >
+                            {EFFORT_LABELS[e]}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
                 <button
                   onClick={send}
@@ -419,16 +609,16 @@ function SkillDetailPage() {
       {/* Side file preview */}
       {preview && (
         <FilePreview
-          name={skill.name}
-          file={skill.file}
-          onClose={() => setPreview(false)}
+          name={preview.name}
+          file={preview.content}
+          onClose={() => setPreview(null)}
         />
       )}
 
       {/* Persistent open button when panel is closed and file exists */}
       {!preview && skill.file && (
         <button
-          onClick={() => setPreview(true)}
+          onClick={() => setPreview({ name: skill.name, content: skill.file })}
           className="fixed right-6 top-1/2 -translate-y-1/2 z-30 inline-flex items-center gap-1.5 rounded-full border border-subtle bg-surface hover:bg-hover px-3 h-9 text-[12px] card-shadow"
           aria-label="Open skill file"
         >
@@ -558,6 +748,19 @@ function MarkdownView({ content, compact = false }: { content: string; compact?:
           blockquote: ({ children }) => (
             <blockquote className="my-3 border-l-2 border-blue pl-3 text-text-secondary">{children}</blockquote>
           ),
+          table: ({ children }) => (
+            <div className="my-3 overflow-x-auto rounded-lg border border-subtle">
+              <table className="w-full border-collapse text-[13px]">{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => <thead className="bg-raised">{children}</thead>,
+          tbody: ({ children }) => <tbody>{children}</tbody>,
+          tr: ({ children }) => <tr className="border-b border-subtle last:border-b-0">{children}</tr>,
+          th: ({ children }) => (
+            <th className="px-3 py-2 text-left font-semibold text-text-primary whitespace-nowrap">{children}</th>
+          ),
+          td: ({ children }) => <td className="px-3 py-2 align-top">{children}</td>,
+          hr: () => <hr className="my-4 border-subtle" />,
           a: ({ href, children }) => (
             <a className="text-blue hover:underline" href={href} target="_blank" rel="noreferrer">
               {children}
@@ -571,15 +774,32 @@ function MarkdownView({ content, compact = false }: { content: string; compact?:
   );
 }
 
+const SKILL_FILE_START = "---SKILL FILE START---";
+const SKILL_FILE_END = "---SKILL FILE END---";
+
 function cleanSkillFile(src: string): string {
   return src
     .trim()
+    // Eski format ile üretilmiş geçmiş skill dosyalarını da temizlemeye devam et (geriye dönük uyumluluk).
     .replace(/^```(?:markdown|md)?\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
 }
 
+/**
+ * AI cevabından skill dosyasını çıkarır. Skill dosyası ---SKILL FILE START---
+ * ve ---SKILL FILE END--- işaretleyicileri arasında düz markdown olarak gelir
+ * (kod bloğuyla sarılmaz), böylece dosyanın içindeki iç içe ``` blokları
+ * (kod örnekleri, tablolar vb.) yanlışlıkla dış sınır sanılıp kesilmiyor.
+ */
 function extractSkillMarkdown(reply: string): string {
+  const startIdx = reply.indexOf(SKILL_FILE_START);
+  const endIdx = reply.indexOf(SKILL_FILE_END);
+  if (startIdx >= 0 && endIdx > startIdx) {
+    return cleanSkillFile(reply.slice(startIdx + SKILL_FILE_START.length, endIdx));
+  }
+
+  // Geriye dönük uyumluluk: eski ```markdown ... ``` formatıyla gelen cevaplar.
   const fenced = reply.match(/```(?:markdown|md)?\s*([\s\S]*?)```/i);
   if (fenced?.[1]?.trim()) return cleanSkillFile(fenced[1]);
 
@@ -587,6 +807,19 @@ function extractSkillMarkdown(reply: string): string {
   if (headingIndex >= 0) return cleanSkillFile(reply.slice(headingIndex));
 
   return "";
+}
+
+/**
+ * Chat balonunda kullanıcıya gösterilecek metin: skill dosyası markerları ve
+ * içeriği çıkarılmış, sadece AI'nin kısa açıklama cümlesi kalır.
+ */
+function stripSkillFileFromReply(reply: string): string {
+  const startIdx = reply.indexOf(SKILL_FILE_START);
+  if (startIdx < 0) return reply.trim();
+  const before = reply.slice(0, startIdx).trim();
+  const endIdx = reply.indexOf(SKILL_FILE_END);
+  const after = endIdx >= 0 ? reply.slice(endIdx + SKILL_FILE_END.length).trim() : "";
+  return [before, after].filter(Boolean).join("\n\n").trim();
 }
 
 

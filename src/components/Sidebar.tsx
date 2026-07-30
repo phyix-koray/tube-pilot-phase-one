@@ -8,6 +8,7 @@ import {
   Zap,
   PanelLeftClose,
   LogOut,
+  Users,
 } from "lucide-react";
 import { mockUser, mockWorkflows } from "@/mock/data";
 import { cn } from "@/lib/tp";
@@ -20,6 +21,7 @@ const groups = [
     label: "AUTOMATE",
     items: [
       { to: "/agents", label: "Agents", icon: Bot },
+      { to: "/agent-teams", label: "Agent Teams", icon: Users },
       { to: "/skills", label: "Skills", icon: Sparkles },
     ],
   },

@@ -5,6 +5,8 @@ export interface SkillMessage {
   role: "user" | "assistant";
   content: string;
   ts: number;
+  /** Bu mesajla birlikte gönderilen dosyalar (varsa) — chat balonunda tıklanabilir chip olarak gösterilir. */
+  attachments?: SkillAttachment[];
 }
 
 export interface SkillAttachment {
@@ -190,6 +192,15 @@ export function removeAttachment(id: string, attachmentId: string) {
       attachments: (s.attachments ?? []).filter((a) => a.id !== attachmentId),
       updatedAt: Date.now(),
     };
+  });
+  write(list);
+}
+
+/** Bir mesaj gönderildikten sonra kompozerdeki attachment chip'lerini temizler. */
+export function clearAttachments(id: string) {
+  const list = read().map((s) => {
+    if (s.id !== id) return s;
+    return { ...s, attachments: [], updatedAt: Date.now() };
   });
   write(list);
 }

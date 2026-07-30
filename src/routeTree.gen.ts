@@ -9,28 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as EditorVideoIdRouteImport } from './routes/editor.$videoId'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as ApiChatSkillRouteImport } from './routes/api/chat-skill'
-import { Route as AppVideosRouteImport } from './routes/_app.videos'
-import { Route as AppSkillsRouteImport } from './routes/_app.skills'
-import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppChannelsRouteImport } from './routes/_app.channels'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AppAgentTeamsRouteImport } from './routes/_app.agent-teams'
 import { Route as AppAgentsRouteImport } from './routes/_app.agents'
-import { Route as AppVideosIndexRouteImport } from './routes/_app.videos.index'
-import { Route as AppSkillsIndexRouteImport } from './routes/_app.skills.index'
-import { Route as AppVideosVideoIdRouteImport } from './routes/_app.videos.$videoId'
-import { Route as AppSkillsSkillIdRouteImport } from './routes/_app.skills.$skillId'
-import { Route as AppRunAgentIdRouteImport } from './routes/_app.run.$agentId'
+import { Route as AppChannelsRouteImport } from './routes/_app.channels'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppSkillsRouteImport } from './routes/_app.skills'
+import { Route as AppVideosRouteImport } from './routes/_app.videos'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as EditorVideoIdRouteImport } from './routes/editor.$videoId'
+import { Route as AppAgentTeamsTeamIdRouteImport } from './routes/_app.agent-teams.$teamId'
 import { Route as AppAgentsAgentIdRouteImport } from './routes/_app.agents.$agentId'
+import { Route as AppRunAgentIdRouteImport } from './routes/_app.run.$agentId'
+import { Route as AppSkillsIndexRouteImport } from './routes/_app.skills.index'
+import { Route as AppSkillsSkillIdRouteImport } from './routes/_app.skills.$skillId'
+import { Route as AppVideosIndexRouteImport } from './routes/_app.videos.index'
+import { Route as AppVideosVideoIdRouteImport } from './routes/_app.videos.$videoId'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -38,48 +43,14 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EditorVideoIdRoute = EditorVideoIdRouteImport.update({
-  id: '/editor/$videoId',
-  path: '/editor/$videoId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
-  getParentRoute: () => AuthRoute,
-} as any)
-const ApiChatSkillRoute = ApiChatSkillRouteImport.update({
-  id: '/api/chat-skill',
-  path: '/api/chat-skill',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppVideosRoute = AppVideosRouteImport.update({
-  id: '/videos',
-  path: '/videos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSkillsRoute = AppSkillsRouteImport.update({
-  id: '/skills',
-  path: '/skills',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppChannelsRoute = AppChannelsRouteImport.update({
-  id: '/channels',
-  path: '/channels',
+const AppAgentTeamsRoute = AppAgentTeamsRouteImport.update({
+  id: '/agent-teams',
+  path: '/agent-teams',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAgentsRoute = AppAgentsRouteImport.update({
@@ -87,49 +58,85 @@ const AppAgentsRoute = AppAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AppRoute,
 } as any)
-const AppVideosIndexRoute = AppVideosIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppVideosRoute,
-} as any)
-const AppSkillsIndexRoute = AppSkillsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppSkillsRoute,
-} as any)
-const AppVideosVideoIdRoute = AppVideosVideoIdRouteImport.update({
-  id: '/$videoId',
-  path: '/$videoId',
-  getParentRoute: () => AppVideosRoute,
-} as any)
-const AppSkillsSkillIdRoute = AppSkillsSkillIdRouteImport.update({
-  id: '/$skillId',
-  path: '/$skillId',
-  getParentRoute: () => AppSkillsRoute,
-} as any)
-const AppRunAgentIdRoute = AppRunAgentIdRouteImport.update({
-  id: '/run/$agentId',
-  path: '/run/$agentId',
+const AppChannelsRoute = AppChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
   getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSkillsRoute = AppSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVideosRoute = AppVideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
+const EditorVideoIdRoute = EditorVideoIdRouteImport.update({
+  id: '/editor/$videoId',
+  path: '/editor/$videoId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppAgentTeamsTeamIdRoute = AppAgentTeamsTeamIdRouteImport.update({
+  id: '/$teamId',
+  path: '/$teamId',
+  getParentRoute: () => AppAgentTeamsRoute,
 } as any)
 const AppAgentsAgentIdRoute = AppAgentsAgentIdRouteImport.update({
   id: '/$agentId',
   path: '/$agentId',
   getParentRoute: () => AppAgentsRoute,
 } as any)
+const AppRunAgentIdRoute = AppRunAgentIdRouteImport.update({
+  id: '/run/$agentId',
+  path: '/run/$agentId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSkillsIndexRoute = AppSkillsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSkillsRoute,
+} as any)
+const AppSkillsSkillIdRoute = AppSkillsSkillIdRouteImport.update({
+  id: '/$skillId',
+  path: '/$skillId',
+  getParentRoute: () => AppSkillsRoute,
+} as any)
+const AppVideosIndexRoute = AppVideosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppVideosRoute,
+} as any)
+const AppVideosVideoIdRoute = AppVideosVideoIdRouteImport.update({
+  id: '/$videoId',
+  path: '/$videoId',
+  getParentRoute: () => AppVideosRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/agent-teams': typeof AppAgentTeamsRouteWithChildren
   '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
   '/skills': typeof AppSkillsRouteWithChildren
   '/videos': typeof AppVideosRouteWithChildren
-  '/api/chat-skill': typeof ApiChatSkillRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
+  '/agent-teams/$teamId': typeof AppAgentTeamsTeamIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/run/$agentId': typeof AppRunAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
@@ -141,12 +148,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/agent-teams': typeof AppAgentTeamsRouteWithChildren
   '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
-  '/api/chat-skill': typeof ApiChatSkillRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
+  '/agent-teams/$teamId': typeof AppAgentTeamsTeamIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/run/$agentId': typeof AppRunAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
@@ -160,14 +168,15 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/agent-teams': typeof AppAgentTeamsRouteWithChildren
   '/_app/agents': typeof AppAgentsRouteWithChildren
   '/_app/channels': typeof AppChannelsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/skills': typeof AppSkillsRouteWithChildren
   '/_app/videos': typeof AppVideosRouteWithChildren
-  '/api/chat-skill': typeof ApiChatSkillRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/editor/$videoId': typeof EditorVideoIdRoute
+  '/_app/agent-teams/$teamId': typeof AppAgentTeamsTeamIdRoute
   '/_app/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/_app/run/$agentId': typeof AppRunAgentIdRoute
   '/_app/skills/$skillId': typeof AppSkillsSkillIdRoute
@@ -181,14 +190,15 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/agent-teams'
     | '/agents'
     | '/channels'
     | '/settings'
     | '/skills'
     | '/videos'
-    | '/api/chat-skill'
     | '/auth/callback'
     | '/editor/$videoId'
+    | '/agent-teams/$teamId'
     | '/agents/$agentId'
     | '/run/$agentId'
     | '/skills/$skillId'
@@ -200,12 +210,13 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/agent-teams'
     | '/agents'
     | '/channels'
     | '/settings'
-    | '/api/chat-skill'
     | '/auth/callback'
     | '/editor/$videoId'
+    | '/agent-teams/$teamId'
     | '/agents/$agentId'
     | '/run/$agentId'
     | '/skills/$skillId'
@@ -218,14 +229,15 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/reset-password'
+    | '/_app/agent-teams'
     | '/_app/agents'
     | '/_app/channels'
     | '/_app/settings'
     | '/_app/skills'
     | '/_app/videos'
-    | '/api/chat-skill'
     | '/auth/callback'
     | '/editor/$videoId'
+    | '/_app/agent-teams/$teamId'
     | '/_app/agents/$agentId'
     | '/_app/run/$agentId'
     | '/_app/skills/$skillId'
@@ -239,24 +251,16 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
-  ApiChatSkillRoute: typeof ApiChatSkillRoute
   EditorVideoIdRoute: typeof EditorVideoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -266,60 +270,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/editor/$videoId': {
-      id: '/editor/$videoId'
-      path: '/editor/$videoId'
-      fullPath: '/editor/$videoId'
-      preLoaderRoute: typeof EditorVideoIdRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/api/chat-skill': {
-      id: '/api/chat-skill'
-      path: '/api/chat-skill'
-      fullPath: '/api/chat-skill'
-      preLoaderRoute: typeof ApiChatSkillRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/videos': {
-      id: '/_app/videos'
-      path: '/videos'
-      fullPath: '/videos'
-      preLoaderRoute: typeof AppVideosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/skills': {
-      id: '/_app/skills'
-      path: '/skills'
-      fullPath: '/skills'
-      preLoaderRoute: typeof AppSkillsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/channels': {
-      id: '/_app/channels'
-      path: '/channels'
-      fullPath: '/channels'
-      preLoaderRoute: typeof AppChannelsRouteImport
+    '/_app/agent-teams': {
+      id: '/_app/agent-teams'
+      path: '/agent-teams'
+      fullPath: '/agent-teams'
+      preLoaderRoute: typeof AppAgentTeamsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/agents': {
@@ -329,40 +298,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAgentsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/videos/': {
-      id: '/_app/videos/'
-      path: '/'
-      fullPath: '/videos/'
-      preLoaderRoute: typeof AppVideosIndexRouteImport
-      parentRoute: typeof AppVideosRoute
-    }
-    '/_app/skills/': {
-      id: '/_app/skills/'
-      path: '/'
-      fullPath: '/skills/'
-      preLoaderRoute: typeof AppSkillsIndexRouteImport
-      parentRoute: typeof AppSkillsRoute
-    }
-    '/_app/videos/$videoId': {
-      id: '/_app/videos/$videoId'
-      path: '/$videoId'
-      fullPath: '/videos/$videoId'
-      preLoaderRoute: typeof AppVideosVideoIdRouteImport
-      parentRoute: typeof AppVideosRoute
-    }
-    '/_app/skills/$skillId': {
-      id: '/_app/skills/$skillId'
-      path: '/$skillId'
-      fullPath: '/skills/$skillId'
-      preLoaderRoute: typeof AppSkillsSkillIdRouteImport
-      parentRoute: typeof AppSkillsRoute
-    }
-    '/_app/run/$agentId': {
-      id: '/_app/run/$agentId'
-      path: '/run/$agentId'
-      fullPath: '/run/$agentId'
-      preLoaderRoute: typeof AppRunAgentIdRouteImport
+    '/_app/channels': {
+      id: '/_app/channels'
+      path: '/channels'
+      fullPath: '/channels'
+      preLoaderRoute: typeof AppChannelsRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/skills': {
+      id: '/_app/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof AppSkillsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/videos': {
+      id: '/_app/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof AppVideosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/editor/$videoId': {
+      id: '/editor/$videoId'
+      path: '/editor/$videoId'
+      fullPath: '/editor/$videoId'
+      preLoaderRoute: typeof EditorVideoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/agent-teams/$teamId': {
+      id: '/_app/agent-teams/$teamId'
+      path: '/$teamId'
+      fullPath: '/agent-teams/$teamId'
+      preLoaderRoute: typeof AppAgentTeamsTeamIdRouteImport
+      parentRoute: typeof AppAgentTeamsRoute
     }
     '/_app/agents/$agentId': {
       id: '/_app/agents/$agentId'
@@ -371,8 +354,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAgentsAgentIdRouteImport
       parentRoute: typeof AppAgentsRoute
     }
+    '/_app/run/$agentId': {
+      id: '/_app/run/$agentId'
+      path: '/run/$agentId'
+      fullPath: '/run/$agentId'
+      preLoaderRoute: typeof AppRunAgentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/skills/': {
+      id: '/_app/skills/'
+      path: '/'
+      fullPath: '/skills/'
+      preLoaderRoute: typeof AppSkillsIndexRouteImport
+      parentRoute: typeof AppSkillsRoute
+    }
+    '/_app/skills/$skillId': {
+      id: '/_app/skills/$skillId'
+      path: '/$skillId'
+      fullPath: '/skills/$skillId'
+      preLoaderRoute: typeof AppSkillsSkillIdRouteImport
+      parentRoute: typeof AppSkillsRoute
+    }
+    '/_app/videos/': {
+      id: '/_app/videos/'
+      path: '/'
+      fullPath: '/videos/'
+      preLoaderRoute: typeof AppVideosIndexRouteImport
+      parentRoute: typeof AppVideosRoute
+    }
+    '/_app/videos/$videoId': {
+      id: '/_app/videos/$videoId'
+      path: '/$videoId'
+      fullPath: '/videos/$videoId'
+      preLoaderRoute: typeof AppVideosVideoIdRouteImport
+      parentRoute: typeof AppVideosRoute
+    }
   }
 }
+
+interface AppAgentTeamsRouteChildren {
+  AppAgentTeamsTeamIdRoute: typeof AppAgentTeamsTeamIdRoute
+}
+
+const AppAgentTeamsRouteChildren: AppAgentTeamsRouteChildren = {
+  AppAgentTeamsTeamIdRoute: AppAgentTeamsTeamIdRoute,
+}
+
+const AppAgentTeamsRouteWithChildren = AppAgentTeamsRoute._addFileChildren(
+  AppAgentTeamsRouteChildren,
+)
 
 interface AppAgentsRouteChildren {
   AppAgentsAgentIdRoute: typeof AppAgentsAgentIdRoute
@@ -415,6 +445,7 @@ const AppVideosRouteWithChildren = AppVideosRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAgentTeamsRoute: typeof AppAgentTeamsRouteWithChildren
   AppAgentsRoute: typeof AppAgentsRouteWithChildren
   AppChannelsRoute: typeof AppChannelsRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -424,6 +455,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAgentTeamsRoute: AppAgentTeamsRouteWithChildren,
   AppAgentsRoute: AppAgentsRouteWithChildren,
   AppChannelsRoute: AppChannelsRoute,
   AppSettingsRoute: AppSettingsRoute,
@@ -449,9 +481,18 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
-  ApiChatSkillRoute: ApiChatSkillRoute,
   EditorVideoIdRoute: EditorVideoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
