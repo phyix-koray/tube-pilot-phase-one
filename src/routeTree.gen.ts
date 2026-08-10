@@ -21,6 +21,7 @@ import { Route as AppSkillsRouteImport } from './routes/_app.skills'
 import { Route as AppVideosRouteImport } from './routes/_app.videos'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as EditorVideoIdRouteImport } from './routes/editor.$videoId'
+import { Route as AppAgentTeamsIndexRouteImport } from './routes/_app.agent-teams.index'
 import { Route as AppAgentTeamsTeamIdRouteImport } from './routes/_app.agent-teams.$teamId'
 import { Route as AppAgentsAgentIdRouteImport } from './routes/_app.agents.$agentId'
 import { Route as AppRunAgentIdRouteImport } from './routes/_app.run.$agentId'
@@ -88,6 +89,11 @@ const EditorVideoIdRoute = EditorVideoIdRouteImport.update({
   path: '/editor/$videoId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAgentTeamsIndexRoute = AppAgentTeamsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAgentTeamsRoute,
+} as any)
 const AppAgentTeamsTeamIdRoute = AppAgentTeamsTeamIdRouteImport.update({
   id: '/$teamId',
   path: '/$teamId',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/run/$agentId': typeof AppRunAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/videos/$videoId': typeof AppVideosVideoIdRoute
+  '/agent-teams/': typeof AppAgentTeamsIndexRoute
   '/skills/': typeof AppSkillsIndexRoute
   '/videos/': typeof AppVideosIndexRoute
 }
@@ -148,7 +155,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
-  '/agent-teams': typeof AppAgentTeamsRouteWithChildren
   '/agents': typeof AppAgentsRouteWithChildren
   '/channels': typeof AppChannelsRoute
   '/settings': typeof AppSettingsRoute
@@ -159,6 +165,7 @@ export interface FileRoutesByTo {
   '/run/$agentId': typeof AppRunAgentIdRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/videos/$videoId': typeof AppVideosVideoIdRoute
+  '/agent-teams': typeof AppAgentTeamsIndexRoute
   '/skills': typeof AppSkillsIndexRoute
   '/videos': typeof AppVideosIndexRoute
 }
@@ -181,6 +188,7 @@ export interface FileRoutesById {
   '/_app/run/$agentId': typeof AppRunAgentIdRoute
   '/_app/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/_app/videos/$videoId': typeof AppVideosVideoIdRoute
+  '/_app/agent-teams/': typeof AppAgentTeamsIndexRoute
   '/_app/skills/': typeof AppSkillsIndexRoute
   '/_app/videos/': typeof AppVideosIndexRoute
 }
@@ -203,6 +211,7 @@ export interface FileRouteTypes {
     | '/run/$agentId'
     | '/skills/$skillId'
     | '/videos/$videoId'
+    | '/agent-teams/'
     | '/skills/'
     | '/videos/'
   fileRoutesByTo: FileRoutesByTo
@@ -210,7 +219,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
-    | '/agent-teams'
     | '/agents'
     | '/channels'
     | '/settings'
@@ -221,6 +229,7 @@ export interface FileRouteTypes {
     | '/run/$agentId'
     | '/skills/$skillId'
     | '/videos/$videoId'
+    | '/agent-teams'
     | '/skills'
     | '/videos'
   id:
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/_app/run/$agentId'
     | '/_app/skills/$skillId'
     | '/_app/videos/$videoId'
+    | '/_app/agent-teams/'
     | '/_app/skills/'
     | '/_app/videos/'
   fileRoutesById: FileRoutesById
@@ -340,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditorVideoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/agent-teams/': {
+      id: '/_app/agent-teams/'
+      path: '/'
+      fullPath: '/agent-teams/'
+      preLoaderRoute: typeof AppAgentTeamsIndexRouteImport
+      parentRoute: typeof AppAgentTeamsRoute
+    }
     '/_app/agent-teams/$teamId': {
       id: '/_app/agent-teams/$teamId'
       path: '/$teamId'
@@ -394,10 +411,12 @@ declare module '@tanstack/react-router' {
 
 interface AppAgentTeamsRouteChildren {
   AppAgentTeamsTeamIdRoute: typeof AppAgentTeamsTeamIdRoute
+  AppAgentTeamsIndexRoute: typeof AppAgentTeamsIndexRoute
 }
 
 const AppAgentTeamsRouteChildren: AppAgentTeamsRouteChildren = {
   AppAgentTeamsTeamIdRoute: AppAgentTeamsTeamIdRoute,
+  AppAgentTeamsIndexRoute: AppAgentTeamsIndexRoute,
 }
 
 const AppAgentTeamsRouteWithChildren = AppAgentTeamsRoute._addFileChildren(
