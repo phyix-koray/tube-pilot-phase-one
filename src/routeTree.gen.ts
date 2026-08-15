@@ -25,6 +25,7 @@ import { Route as AppAgentTeamsIndexRouteImport } from './routes/_app.agent-team
 import { Route as AppAgentTeamsTeamIdRouteImport } from './routes/_app.agent-teams.$teamId'
 import { Route as AppAgentsAgentIdRouteImport } from './routes/_app.agents.$agentId'
 import { Route as AppRunAgentIdRouteImport } from './routes/_app.run.$agentId'
+import { Route as AppRunMusicComposerRouteImport } from './routes/_app.run.music-composer'
 import { Route as AppSkillsIndexRouteImport } from './routes/_app.skills.index'
 import { Route as AppSkillsSkillIdRouteImport } from './routes/_app.skills.$skillId'
 import { Route as AppVideosIndexRouteImport } from './routes/_app.videos.index'
@@ -109,6 +110,11 @@ const AppRunAgentIdRoute = AppRunAgentIdRouteImport.update({
   path: '/run/$agentId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRunMusicComposerRoute = AppRunMusicComposerRouteImport.update({
+  id: '/run/music-composer',
+  path: '/run/music-composer',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSkillsIndexRoute = AppSkillsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/agent-teams/$teamId': typeof AppAgentTeamsTeamIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/run/$agentId': typeof AppRunAgentIdRoute
+  '/run/music-composer': typeof AppRunMusicComposerRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/videos/$videoId': typeof AppVideosVideoIdRoute
   '/agent-teams/': typeof AppAgentTeamsIndexRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/agent-teams/$teamId': typeof AppAgentTeamsTeamIdRoute
   '/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/run/$agentId': typeof AppRunAgentIdRoute
+  '/run/music-composer': typeof AppRunMusicComposerRoute
   '/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/videos/$videoId': typeof AppVideosVideoIdRoute
   '/agent-teams': typeof AppAgentTeamsIndexRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_app/agent-teams/$teamId': typeof AppAgentTeamsTeamIdRoute
   '/_app/agents/$agentId': typeof AppAgentsAgentIdRoute
   '/_app/run/$agentId': typeof AppRunAgentIdRoute
+  '/_app/run/music-composer': typeof AppRunMusicComposerRoute
   '/_app/skills/$skillId': typeof AppSkillsSkillIdRoute
   '/_app/videos/$videoId': typeof AppVideosVideoIdRoute
   '/_app/agent-teams/': typeof AppAgentTeamsIndexRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/agent-teams/$teamId'
     | '/agents/$agentId'
     | '/run/$agentId'
+    | '/run/music-composer'
     | '/skills/$skillId'
     | '/videos/$videoId'
     | '/agent-teams/'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/agent-teams/$teamId'
     | '/agents/$agentId'
     | '/run/$agentId'
+    | '/run/music-composer'
     | '/skills/$skillId'
     | '/videos/$videoId'
     | '/agent-teams'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_app/agent-teams/$teamId'
     | '/_app/agents/$agentId'
     | '/_app/run/$agentId'
+    | '/_app/run/music-composer'
     | '/_app/skills/$skillId'
     | '/_app/videos/$videoId'
     | '/_app/agent-teams/'
@@ -378,6 +390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRunAgentIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/run/music-composer': {
+      id: '/_app/run/music-composer'
+      path: '/run/music-composer'
+      fullPath: '/run/music-composer'
+      preLoaderRoute: typeof AppRunMusicComposerRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/skills/': {
       id: '/_app/skills/'
       path: '/'
@@ -471,6 +490,7 @@ interface AppRouteChildren {
   AppSkillsRoute: typeof AppSkillsRouteWithChildren
   AppVideosRoute: typeof AppVideosRouteWithChildren
   AppRunAgentIdRoute: typeof AppRunAgentIdRoute
+  AppRunMusicComposerRoute: typeof AppRunMusicComposerRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -481,6 +501,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSkillsRoute: AppSkillsRouteWithChildren,
   AppVideosRoute: AppVideosRouteWithChildren,
   AppRunAgentIdRoute: AppRunAgentIdRoute,
+  AppRunMusicComposerRoute: AppRunMusicComposerRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

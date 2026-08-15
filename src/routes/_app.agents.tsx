@@ -120,12 +120,14 @@ function AgentsPage() {
               w.id === "ai-video-generator" ||
               w.id === "stock-video-generator" ||
               w.id === "mix-video-generator";
+            // music-composer artık gerçek (mock olmayan) bir çalıştırma sayfasına sahip.
+            const hasRealRunPage = isVideoAgent || w.id === "music-composer";
             return (
               <AgentCard
                 key={w.id}
                 w={w}
                 onUse={() => {
-                  if (isVideoAgent && typeof window !== "undefined") {
+                  if (hasRealRunPage && typeof window !== "undefined") {
                     window.open(`/run/${w.id}`, "_blank", "noopener");
                   } else {
                     setRunTarget(w);
