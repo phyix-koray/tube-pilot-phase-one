@@ -49,6 +49,11 @@ function MusicComposerRunPage() {
   const [loopCount, setLoopCount] = useState(1);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [sunoGenerating, setSunoGenerating] = useState(false);
+  const [sunoLog, setSunoLog] = useState<string[]>([]);
+  const [sunoProgress, setSunoProgress] = useState<{ done: number; total: number } | null>(null);
+  const [instrumental, setInstrumental] = useState(true);
+
   const [mergedAudioUrl, setMergedAudioUrl] = useState<string | null>(null);
   const [mergedAudioPath, setMergedAudioPath] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
@@ -113,6 +118,60 @@ function MusicComposerRunPage() {
 
   const removeUploaded = (path: string) => {
     setUploadedAudio((prev) => prev.filter((a) => a.path !== path));
+  };
+
+  const generateOnSuno = async () => {
+    if (!runId || !theme) return;
+    setError(null);
+    setSunoGenerating(true);
+    setSunoLog([]);
+    setSunoProgress(null);
+
+    try {
+      const res = await fetch(`${BACKEND_URL()}/api/agents/music/suno/generate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tags: theme, instrumental, runId }),
+      });
+      if (!res.body) throw new Error("Sunucudan akış alınamadı");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // SSE mesajları boş satırla ayrılır: "event: X\ndata: Y\n\n"
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+        for (const part of parts) {
+          const eventLine = part.split("\n").find((l) => l.startsWith("event: "));
+          const dataLine = part.split("\n").find((l) => l.startsWith("data: "));
+          if (!eventLine || !dataLine) continue;
+          const eventType = eventLine.slice("event: ".length).trim();
+          const data = JSON.parse(dataLine.slice("data: ".length));
+
+          if (eventType === "status") {
+            setSunoLog((prev) => [...prev, data.message]);
+          } else if (eventType === "progress") {
+            setSunoProgress({ done: data.done, total: data.total });
+          } else if (eventType === "error") {
+            throw new Error(data.error);
+          } else if (eventType === "done") {
+            const files = data.files as { path: string; filename: string }[];
+            setUploadedAudio(files.map((f) => ({ name: f.filename, path: f.path })));
+            setSunoLog((prev) => [...prev, `✓ ${files.length} şarkı indirildi.`]);
+          }
+        }
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSunoGenerating(false);
+    }
   };
 
   const runAssembly = async () => {
@@ -213,6 +272,55 @@ function MusicComposerRunPage() {
             <div className="text-[12px] text-text-tertiary">Bugünün teması</div>
             <div className="text-[15px] font-medium text-text-primary mt-0.5">{theme}</div>
           </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="instrumental"
+              type="checkbox"
+              checked={instrumental}
+              onChange={(e) => setInstrumental(e.target.checked)}
+              className="rounded border-subtle"
+            />
+            <label htmlFor="instrumental" className="text-[12.5px] text-text-secondary">
+              Enstrümantal (sözsüz)
+            </label>
+          </div>
+
+          <button
+            onClick={generateOnSuno}
+            disabled={sunoGenerating}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-text-primary text-[color:var(--tp-base)] hover:opacity-90 disabled:opacity-60 px-4 h-10 text-[13.5px] font-medium"
+          >
+            {sunoGenerating && <Loader2 className="w-4 h-4 animate-spin" />}
+            Suno'da Otomatik Üret
+          </button>
+
+          {sunoLog.length > 0 && (
+            <div className="rounded-lg bg-raised border border-subtle p-3 text-[12px] text-text-secondary space-y-1 max-h-40 overflow-y-auto">
+              {sunoLog.map((line, i) => (
+                <div key={i}>• {line}</div>
+              ))}
+              {sunoProgress && (
+                <div className="text-text-tertiary">
+                  İlerleme: {sunoProgress.done}/{sunoProgress.total}
+                </div>
+              )}
+            </div>
+          )}
+
+          {sunoGenerating && (
+            <p className="text-[11.5px] text-text-tertiary">
+              İlk çalıştırmada bir Chrome penceresi açılabilir — açılırsa Suno'ya normal
+              şekilde giriş yap, sonraki seferlerde bu adım otomatik geçilir.
+            </p>
+          )}
+
+          <div className="flex items-center gap-2">
+            <div className="h-px bg-subtle flex-1" />
+            <span className="text-[11px] text-text-tertiary">ya da manuel</span>
+            <div className="h-px bg-subtle flex-1" />
+          </div>
+
           <div className="rounded-lg bg-raised border border-subtle p-3 text-[12.5px] text-text-secondary leading-relaxed">
             1. <a href="https://suno.com" target="_blank" rel="noreferrer" className="text-blue hover:underline">Suno.com</a>'a git, bu temayla bir şarkı üret.
             <br />
