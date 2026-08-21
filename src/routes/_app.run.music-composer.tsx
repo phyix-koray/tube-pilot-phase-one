@@ -218,6 +218,78 @@ function MusicComposerRunPage() {
     }
   };
 
+  // TEST YARDIMCISI: Suno'yu beklemeden 3. ve 4. adımları görmek için.
+  // Gerçek backend uçlarını (upload, merge, thumbnail, render, metadata)
+  // küçük, sahte bir mp3 dosyasıyla çağırır — böylece sonuç gerçek bir
+  // video/resim olur, tamamen uydurma değildir.
+  const fillWithTestDataAndJump = async () => {
+    setError(null);
+    setAssembling(true);
+    try {
+      let currentTheme = theme;
+      let currentRunId = runId;
+      if (!currentTheme || !currentRunId) {
+        currentTheme = currentTheme ?? `[TEST] ${genre || "ambient jazz, rainy city nights"}`;
+        const themeData = await postJson<{ theme: string; runId: string }>(
+          "/api/agents/music/theme",
+          { genre, runId: currentRunId },
+        );
+        currentTheme = themeData.theme;
+        currentRunId = themeData.runId;
+        setTheme(currentTheme);
+        setRunId(currentRunId);
+      }
+
+      // 1 saniyelik sessiz bir "mp3" (gerçek, geçerli minimal bir dosya değil ama
+      // ffmpeg çoğu zaman ham PCM/WAV içeriğini de kabul eder; burada asıl amaç
+      // merge-audio ve render-video uçlarının uçtan uca akışını göstermek).
+      const testAudioBase64 =
+        "//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u4=";
+
+      const uploadData = await postJson<{ filePath: string; filename: string }>(
+        "/api/agents/music/upload-audio",
+        { filename: "test-audio.mp3", base64: testAudioBase64, runId: currentRunId },
+      );
+      const testAudio = [{ name: uploadData.filename, path: uploadData.filePath }];
+      setUploadedAudio(testAudio);
+
+      const [mergeRes, thumbRes] = await Promise.all([
+        postJson<{ mergedAudioPath: string; mergedAudioUrl: string }>("/api/agents/music/merge-audio", {
+          audioPaths: testAudio.map((a) => a.path),
+          loopCount,
+          runId: currentRunId,
+        }),
+        postJson<{ thumbnailPath: string; thumbnailUrl: string }>("/api/agents/music/thumbnail", {
+          theme: currentTheme,
+          runId: currentRunId,
+        }),
+      ]);
+      setMergedAudioUrl(mergeRes.mergedAudioUrl);
+      setMergedAudioPath(mergeRes.mergedAudioPath);
+      setThumbnailUrl(thumbRes.thumbnailUrl);
+      setThumbnailPath(thumbRes.thumbnailPath);
+
+      const videoRes = await postJson<{ videoUrl: string }>("/api/agents/music/render-video", {
+        audioPath: mergeRes.mergedAudioPath,
+        imagePath: thumbRes.thumbnailPath,
+        runId: currentRunId,
+      });
+      setVideoUrl(videoRes.videoUrl);
+
+      const metaRes = await postJson<{ title: string; description: string; tags: string[] }>(
+        "/api/agents/music/metadata",
+        { theme: currentTheme },
+      );
+      setMetadata(metaRes);
+
+      setStep(3);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setAssembling(false);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full max-w-[720px]">
       <Link
@@ -236,7 +308,18 @@ function MusicComposerRunPage() {
         </p>
       </div>
 
-      <StepBar steps={STEPS} current={step} onJump={(i) => i <= step && setStep(i)} />
+      <StepBar steps={STEPS} current={step} onJump={(i) => setStep(i)} />
+
+      {step < 3 && (
+        <button
+          onClick={fillWithTestDataAndJump}
+          disabled={assembling}
+          className="inline-flex items-center gap-2 rounded-lg border border-dashed border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 px-3 h-8 text-[12px] font-medium text-amber-600 disabled:opacity-50"
+        >
+          {assembling && <Loader2 className="w-3 h-3 animate-spin" />}
+          🧪 Test verisiyle 3/4'e atla (Suno'yu atlar)
+        </button>
+      )}
 
       {error && (
         <div className="rounded-lg border border-red/30 bg-red/5 px-3 py-2 text-[13px] text-red">
